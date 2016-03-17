@@ -1,0 +1,211 @@
+
+/***************************************************************************/
+/****   The GCC DOCS looks style file                                   ****/
+/***************************************************************************/
+
+/* Overall body */
+
+BODY {
+     /* font-family: Times, Helvetica, Arial, Courier;   */
+     font-family: sans-serif, Helvetica, Times, Courier, Arial;
+     font-style: normal;
+     font-size: large;
+     text-align: justify;
+
+     margin: 1em;  /* on all sides */
+
+     background: #CEC;
+     /* line-height: 1.5; */
+
+     color: #000;     
+     padding: 1em 0 0 0;
+     margin: 1em 1em 1em 25%; /* top right bottom left */
+   }
+
+/* Lists */
+ul
+   {
+      list-style-type: square;
+   }
+
+ol
+   {
+      list-style-type: decimal;
+   }
+
+li {
+  list-style-type: disc;
+  list-style-image: none;
+  list-style-position: outside;
+  text-align:  justify;
+}
+
+/* sub and super scripts, emphasis etc. */
+sub {
+       font-size: x-small;
+    }
+
+sup {
+       font-size: x-small;
+    }
+
+em  {
+      font-style: italic;
+      color: #069;
+    }
+
+hr
+   {
+      padding: 0;
+      color: #ffffff;
+   }
+
+p
+   {
+      text-align:  justify;
+   }
+
+pre
+   {
+      border: thin dashed;
+      padding: 1ex;
+      background: #9A9;
+   }
+
+code 
+   {
+      color: #C00;
+      font-size: inherit;
+   }
+
+/* tables */
+table
+   {
+      border: thin solid;
+      border: none;
+      width: 100%;
+      padding: 2pt;
+   }
+
+td
+   {
+      text-align: justify;
+      background-color: #9A9;
+      font-size: larger;
+      color: #000;
+   }
+
+/* headers */
+h1 {
+  line-height: 1;
+  text-align: center;
+  font-variant: small-caps;
+  font-size: 24pt;;
+  border-bottom: thin solid;
+  padding: 0 0 0 0;
+  font-weight: bold;
+}
+
+h1:first-line { 
+  border-bottom: none;		/* bug in Konqueror 3.1 */
+}
+
+h1, h3 {
+  color: #000;
+}
+
+h2 {
+  text-align: left;
+  line-height: 1;
+  border-top: thin solid;
+  border-bottom: thin solid;
+  padding: 0.2em 0.5em 0.2em 0.5em;
+  font-weight: normal;
+  text-transform: uppercase;
+  clear: both;
+  margin-top: 2em;
+}
+
+h3 {
+  font-weight: bold;
+  font-size: large;
+  margin: 1.5em 1em 1em 0;
+  display: block;
+}
+
+/* Anchors */
+A  
+   { 
+     text-decoration: none; 
+   }
+
+A:link
+   {
+      /* color: #E5DEC6;     */
+      text-decoration: none;
+      color: #900;
+   }
+
+A:visited 
+   {
+      /* color: #C3BCA4; */
+      color: #F60;
+   }
+
+A:active
+   {
+      background: #FFF;
+      color: #00F;
+   }
+
+A:hover 
+   { 
+      background: #FFF; 
+      color: #069;
+   }
+
+/* user (texinfo, in this case) defined classes */
+.float
+   {
+      border: none; /* thin dashed; */
+      padding: 1em 1em 1pt 1em;
+      margin: 1em 1em 1em 1em;
+      background: #ACA;
+   }
+
+.float table
+   {
+      border: thin dashed;
+      padding: 1ex;
+      background: #9A9;
+      font-size: smaller;
+   }
+
+/* Fix the brief contents on the LHS */
+div.shortcontents 
+  {
+    position: fixed;
+    overflow: auto;
+    height: auto;
+    width: 20%; 
+    top: 1em; right: auto; bottom: auto; left: 1em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    background: #9C9;
+    border: thin solid;
+    color: #FFF; 
+    font-size: smaller;
+  }
+
+div.shortcontents li
+  {
+    text-align: left;
+    list-style-type: square;
+    list-style-position: outside;
+  }
+
+div.shortcontents h2
+  {
+    font-size: small;
+    border-top: none;
+  }

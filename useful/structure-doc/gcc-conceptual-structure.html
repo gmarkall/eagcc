@@ -1,0 +1,2524 @@
+<html lang="en"><head>
+
+<title>The Conceptual Structure of GCC</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="The Conceptual Structure of GCC">
+<meta name="generator" content="makeinfo 4.11">
+<link title="Top" rel="top" href="#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This is edition  1.0 of "The Conceptual Structure of GCC", last updated
+on January 7, 2008.
+
+Copyright (C) 2004-2008 Abhijat Vichare
+, I.I.T. Bombay.
+
+     Permission is granted to copy, distribute and/or modify this
+     documentunder the terms of the  GNU Free Documentation License,
+     Version 1.2 or any later version  published by the Free Software
+     Foundation; with no Invariant    Sections,    with    the
+     Front-Cover    Texts    being "The Conceptual Structure of GCC,"
+     and  with the Back-Cover Texts as  in (a) below.  A copy of  the
+     license is included in the  section entitled "GNU Free
+     Documentation License."
+
+     (a)  The FSF's  Back-Cover Text  is: "You  have freedom  to  copy
+     and modify this  GNU Manual, like  GNU software.  Copies published
+     by the Free Software Foundation raise funds for GNU development."
+   -->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+@import url(gcc-int-docs.css);
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head><body>
+<h1 class="settitle">The Conceptual Structure of GCC</h1>
+   <div class="shortcontents">
+<h2>Short Contents</h2>
+<ul>
+<li><a href="#toc_Top">The Conceptual Structure of GCC</a></li>
+<li><a href="#toc_Introduction">1 Introduction</a></li>
+<li><a href="#toc_Language-Abstractions">2 Language Abstractions</a></li>
+<li><a href="#toc_The-GCC-System">3 The GCC System</a></li>
+<li><a href="#toc_The-Gimple-IR">4 The Gimple IR</a></li>
+<li><a href="#toc_The-RTL">5 The RTL</a></li>
+<li><a href="#toc_Summary">6 Summary</a></li>
+<li><a href="#toc_Conclusion-and-Future-Work">7 Conclusion and Future Work</a></li>
+<li><a href="#toc_References">References</a></li>
+<li><a href="#toc_List-of-Figures">List of Figures</a></li>
+<li><a href="#toc_List-of-Tables">List of Tables</a></li>
+<li><a href="#toc_Copyright">Appendix A Copyright</a></li>
+</ul>
+</div>
+
+
+
+   <div class="contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a name="toc_Top" href="#Top">The Conceptual Structure of GCC</a>
+</li><li><a name="toc_Introduction" href="#Introduction">1 Introduction</a>
+</li><li><a name="toc_Language-Abstractions" href="#Language-Abstractions">2 Language Abstractions</a>
+<ul>
+<li><a href="#Abstraction-Gap">2.1 The Abstraction Gap</a>
+</li></ul>
+</li><li><a name="toc_The-GCC-System" href="#The-GCC-System">3 The GCC System</a>
+<ul>
+<li><a href="#The-Impact-of-Retargetability">3.1 The Impact of Retargetability</a>
+</li><li><a href="#The-GCC-Compiler-Generation-Architecture">3.2 The GCC Compiler Generation Architecture</a>
+</li><li><a href="#The-GCC-Compiler-Architecture">3.3 The GCC Compiler Architecture</a>
+</li><li><a href="#The-GCC-Build-System-Architecture">3.4 The GCC Build System Architecture</a>
+</li><li><a href="#The-GCC-IRs">3.5 The GCC IRs</a>
+</li></ul>
+</li><li><a name="toc_The-Gimple-IR" href="#The-Gimple-IR">4 The Gimple IR</a>
+<ul>
+<li><a href="#Development-time-Gimple-to-IR_002dRTL-conversion-issues">4.1 Gimple –&gt; IR-RTL Conversion Issues at <i>t<sub>develop</sub></i></a>
+</li><li><a href="#Build-time-Gimple-to-IR_002dRTL-conversion-issues">4.2 Gimple –&gt; IR-RTL Conversion Issues at <i>t<sub>build</sub></i></a>
+</li><li><a href="#Operation-time-Gimple-to-IR_002dRTL-conversion">4.3 Gimple –&gt; IR-RTL Conversion at <i>t<sub>run</sub></i></a>
+</li></ul>
+</li><li><a name="toc_The-RTL" href="#The-RTL">5 The RTL</a>
+<ul>
+<li><a href="#Some-RTL-Concepts">5.1 Some RTL Concepts</a>
+</li><li><a href="#The-Two-Languages-_002d-MD_002dRTL-and-IR_002dRTL">5.2 The Two Languages: MD-RTL and IR-RTL</a>
+<ul>
+<li><a href="#MD_002dRTL-_002d-Capturing-Target-Instruction-Semantics">5.2.1 MD-RTL: Capturing Target Instruction Semantics</a>
+</li><li><a href="#IR_002dRTL-_002d-Expressing-a-Compilation">5.2.2 IR-RTL: Expressing a Compilation</a>
+</li><li><a href="#GCC-Implementation-of-MD_002dRTL-and-IR_002dRTL">5.2.3 GCC Implementation of MD-RTL and IR-RTL</a>
+</li></ul>
+</li><li><a href="#How-the-RTL-Works">5.3 How the RTL Works</a>
+<ul>
+<li><a href="#MD_002dRTL-_002d-Describing-Target-Machines">5.3.1 MD-RTL: Describing Target Machines (<i>t<sub>develop</sub></i>)</a>
+</li><li><a href="#From-MD_002dRTL-to-IR_002dRTL">5.3.2 From MD-RTL to IR-RTL (<i>t<sub>build</sub></i>)</a>
+</li><li><a href="#IR_002dRTL-_002d-Representating-a-Compilation">5.3.3 IR-RTL: Representating a Compilation (<i>t<sub>run</sub></i>)</a>
+</li></ul>
+</li></ul>
+</li><li><a name="toc_Summary" href="#Summary">6 Summary</a>
+</li><li><a name="toc_Conclusion-and-Future-Work" href="#Conclusion-and-Future-Work">7 Conclusion and Future Work</a>
+<ul>
+<li><a href="#Future-Work">7.1 Future Work</a>
+</li></ul>
+</li><li><a name="toc_References" href="#References">References</a>
+</li><li><a name="toc_List-of-Figures" href="#List-of-Figures">List of Figures</a>
+</li><li><a name="toc_List-of-Tables" href="#List-of-Tables">List of Tables</a>
+</li><li><a name="toc_Copyright" href="#Copyright">Appendix A Copyright</a>
+<ul>
+<li><a href="#GNU-Free-Documentation-License">A.1 GNU Free Documentation License</a>
+</li></ul>
+</li></ul>
+</div>
+
+<p><a name="Top"></a>
+
+</p><h2 class="unnumbered">The Conceptual Structure of GCC</h2>
+
+<p>The GNU compiler collection is a commonly used system compiler.  It is
+a retargetable compiler  and is ported to many  commonly used systems. 
+Although a free implementation, there is no description that describes
+the abstractions used within.   This document gives an conceptual view
+of  the  GCC  architecture.   It  is  a  starting  point  for  anybody
+interested in GCC internals, and is  a part of a set of documents that
+gradually unfold  the GCC internals.   As such, we recommend  that you
+start exploring GCC internals with this document.
+
+   </p><p>In  this document  various abstractions  in programming  languages are
+used  to   identify  phases  in   the  translation  process   in  GCC. 
+Retargetability  requirement   implies  that  target   information  is
+incorporated into  the compiler  at build time  rather than  at design
+time.   This separates  GCC into  three distinct  views:  the compiler
+development  view,  the  compiler  generation view  and  the  compiler
+operation view.  With each view  is associated a conceptual model that
+helps in  understanding GCC better.  Peculiar  to GCC is the  use of a
+syntactically  Lisp like  language,  the  RTL, that  is  used for  two
+distinct purposes:  to express  target properties at  development time
+and to  internally represent the  compilation of program  at operation
+time.  The GCC RTL system  is best understood by defining two separate
+languages  for  each  purpose  that  are  implemented  using  the  RTL
+infrastructure.  The retargetability  requirement implies a separation
+of  the   translation  table  used  to  translate   a  target  machine
+independent    representation   to    a   target    machine   specific
+representation.  This separation  coupled with a dual use  RTL gives a
+build time  generative framework of  GCC that first adapts  the target
+information  to  internal  forms  useful  to the  compiler,  and  then
+compiles the complete target specific compiler.
+
+</p><p><a name="Introduction"></a>
+
+</p><h2 class="chapter">1 Introduction</h2>
+
+<p>The GNU  Compiler Collection (GCC)  is a standard system  compiler for
+GNU systems,  including GNU/Linux.  It is often  an alternate compiler
+on many platforms due to it's wide spread availability.  The FSF model
+of  development  has  reduced the  costs  and  GCC  is also  a  strong
+candidate  for new  systems,  like embedded  systems,  that require  a
+software development system.  However, porting GCC to new platforms is
+an involved task.   And then, there is no  suitable description of the
+internals  that  can  serve  porting  endeavors.   The  GCC  internals
+document  found on  the  GCC site  (see <a href="#GCC-Internals-_0028by-Richard-Stallman_0029">GCC Internals (by Richard Stallman)</a>),  has more  of a  “reference” flavor  than  a conceptual
+description of  the GCC architecture.  Most porting exercises  rely on
+descriptions  of personal experiences  in GCC  porting (see <a href="#Porting-GCC-for-Dunces-_0028by-Hans_002dPeter-Nilsson_0029">Porting GCC for Dunces (by Hans-Peter Nilsson)</a>), or as  parts of other works
+(see <a href="#GCC-Internals-_0028by-Deigo-Novillo_0029">GCC Internals (by Deigo Novillo)</a> and <a href="#GCC-_002d_002d-Yesterday-Today-and-Tomorrow-_0028by-Deigo-Novillo_0029">GCC – Yesterday Today and Tomorrow (by Deigo Novillo)</a>).  An  attempt has  also been
+made  (see <a href="#GCC-Wiki-Book">GCC Wiki Book</a>)   to  describe  the   internals  more
+completely.    It  is  a   collective  effort   but  focuses   on  the
+implementation details.  The lack of a description of the internals at
+a  sufficiently abstract  level  makes porting  attempts an  expensive
+affair  unless  the people  involved  are  well  versed with  compiler
+internals.   The availability  of  such a  description  is useful  for
+general study  of compilation techniques, and in  particular, can help
+GCC  become  a system  of  choice  for  researchers in  languages  and
+compilation,  especially  those  who  wish  to  deal  with  real  life
+engineering issues.
+
+   </p><p>This  document  views  GCC  version  4.0.2  as  a  chain  of  lowering
+operations in  terms of the  “abstraction lowering” phases  that are
+required to lower  a C like HLL  to a typical 32 bit  target.  We show
+how  these lowering  operations connect  with the  implementation, and
+thus   serve  to   conceptually  understand   the   otherwise  complex
+implementation.   In  particular,   we  demonstrate  the  utility  and
+implementation strategies for the  GCC machine description system that
+is a consequence of the retargetability requirements of GCC.
+
+   </p><p>The  document  contributes  to  bridging  the gap  between  the  known
+concepts and  a complex implementation.   In particular, we  hope that
+the identification of the sequence of lowering operations encourages a
+more  formal  effort in  GCC  internals.   The  work is  organized  as
+follows.   First,  we identify  the  basic  abstraction mechanisms  in
+programming  languages.   These  are  used to  motivate  an  intuitive
+concept of an  abstraction gap between the source  language and target
+language of a compiler.  Having identified this gap, this section ends
+with  an empirical  prescription to  obtain  the phase  sequence of  a
+compiler for lowering the HLL  abstractions.  Such a phase sequence of
+operations would be  followed by a compiler in  operation and the goal
+of design and implementation is to specify the desired phase sequence. 
+With the  backdrop of  these abstraction mechanisms  and the  need for
+retargetability,  we  identify three  parts  of  the  GCC system:  the
+compiler generation  framework architecture, the build  system and the
+compiler operation architecture.  The views are cleanly separated from
+each other  by identifying  the time durations  of work for  each.  In
+fact, these time  durations are used throughout all  our documents and
+serve  as “hooks”  from  which the  different  views of  GCC may  be
+obtained.  For the compiler operation view we identify the IRs of GCC. 
+One of the IR languages, the  RTL, is also used in at development time
+to specify  machine descriptions, and  is the connecting  link between
+the  development  time  and  compiler  operation  time  of  GCC.   The
+identification  of   these  three  parts   of  the  GCC   system,  the
+architecture of  the compiler  generation framework, the  build system
+and the compiler operation architecture, are the central contributions
+of this work.  We mention the front end processing IR for completeness
+but our main focus is the rest  of the system.  The C language is used
+as an illustrative HLL; GCC was  born as a C compiler.  We also ignore
+optimisations  that GCC  performs, partly  because they  are  large in
+number and  mainly because they  do not contribute to  the translation
+process.  We conclude with a note on future directions.
+
+   </p><p>In short, we  focus on the compilation phase  sequence and the backend
+architecture using C as an  illustrative HLL.  The following are a few
+issues that we ignore:
+
+     </p><ol start="1" type="1">
+<li>front end architecture,
+</li><li>standards compliance,
+</li><li>optimisations, and
+</li><li>supporting code like memory management and error detection and
+reporting.
+        </li></ol>
+
+<p><a name="Language-Abstractions"></a>
+
+</p><h2 class="chapter">2 Language Abstractions</h2>
+
+<p>There are  four main kinds of abstractions  that programming languages
+use:   data   abstraction,   control  flow   abstraction,   procedural
+abstraction and name space abstractions.
+
+   </p><p>Data  abstractions involve  identification  of useful  data types  and
+their definitions in terms  of available ones.  Languages support data
+abstraction  by providing  a  set  of data  types,  and mechanisms  to
+compose newer ones from the  given ones, or the ones already composed. 
+Given a  pair of programming  languages it is possible  to intuitively
+grasp their respective levels  of data abstraction.  A typical machine
+language fares poorly in relation to an HLL like C.  C provides richer
+data  types  and  data  structuring mechanisms  than  typical  machine
+languages.
+
+   </p><p>Control flow abstractions,  minimally, are sequencing and unrestricted
+branching.  Higher order flow constructs include loops, function calls
+(in  the  sense of  current  state  preservation,  loading new  state,
+passing control  to it, and  returning back to previous  state through
+state restoration), exception  handling, coroutines and continuations. 
+Most higher order control flow  constructs are not provided by typical
+machine languages.
+
+   </p><p>Procedural abstractions  isolate computations from  the state.  Having
+named  the computations,  they can  be reused  by supplying  the state
+under which  the evaluation  is to be  performed.  Function  calls are
+procedural  abstractions in  that named  computations are  invoked for
+various  values.  Higher  order functions,  nested functions  etc. are
+procedural abstractions.
+
+   </p><p>Name space abstractions emerge  because computation objects are named. 
+However,  since   there  are  a  large  number   of  objects,  program
+specifications are under a  “naming pressure” to create unique names
+that  can be  bound to  unique addresses  on target  hardware.  Naming
+pressure is alleviated  by defining the lifetime and  access rules for
+names of the objects.   Scope rules, name privacy, mangling techniques
+are examples of name space  abstractions that serve to manage the name
+pressure.
+
+</p><p><a name="Abstraction-Gap"></a>
+
+</p><h3 class="section">2.1 The Abstraction Gap</h3>
+
+<p>Given the  various abstractions in programming language  design, it is
+possible to  intuitively grasp the  abstraction gap between a  pair of
+languages.    For  the   purposes  of   compilation,  we   consider  a
+&lt;
+HLL, machine  language
+&gt;
+pair.  For concreteness, we illustrate using C as the HLL and the i386
+as the machine language.
+
+   </p><p>For C, we have
+     </p><ul>
+<li>Data  Abstraction: Character, unsigned integers  and string data
+  types. 
+</li><li>Control Abstraction: If-then-else branching, finite and infinite
+  iteration loops and function calls. 
+</li><li>Procedural Abstraction: Function calls. 
+</li><li>Name  Space  Abstraction:  statically  scoped  variables,  file
+  scoping. 
+</li></ul>
+
+   <p>For the i386, we have
+     </p><ul>
+<li>Data  Abstraction:  Unsigned  integers  between 0  and  a
+<samp><span class="env">MAX_INT</span></samp>.
+
+     </li><li>Control Abstraction: Auto-incrementing program counter to
+support sequencing, and an unrestricted branch.
+
+     </li><li>Procedural  Abstraction: None  (the <code>call</code>  instruction does
+  not perform a true procedure call).
+
+     </li><li>Name Space Abstraction: None. 
+</li></ul>
+
+   <p>Despite a partial listing, the enumeration of the abstractions clearly
+points out  to an abstraction gap.   A compiler is  required to bridge
+this abstraction gap.  We suggest  an empirical rule for bridging this
+abstraction gap:  handle largest gap first.  Thus  the compiler should
+start  bridging either the  procedural abstraction  or the  name space
+abstraction first.  Note that the suggestion does not imply completing
+the handling of  a given abstraction before starting  to deal with the
+next.  Also,  since the gap is intuitive  in nature, we do  not have a
+unique lowering sequence.
+
+   </p><p>The phase  sequence of  a compiler is  the sequence of  lowering these
+abstractions from  the HLL to  the target.  The GCC  lowering sequence
+(for C) is: procedural
+-&gt;
+name space
+-&gt;
+control flow
+-&gt;
+data.
+
+</p><p><a name="The-GCC-System"></a>
+
+</p><h2 class="chapter">3 The GCC System</h2>
+
+<p>This  section describes the  main ideas  of the  three views  that are
+useful to  understand the  GCC system at  three distinct  time periods
+described  in  <a href="#The-Impact-of-Retargetability">The Impact of Retargetability</a>  and depicted  in
+<a href="#fig_002dtime_002dline">fig-time-line</a>.  <a href="#fig_002dcgf">fig-cgf</a>  succinctly captures the structure
+of  the entire  GCC  system.   It's components  are  described in  the
+various  subsections of this  section.  The  figure can  be vertically
+divided  into  three parts  each  corresponding  to  the various  time
+periods.   The top  box of  the figure  is described  in  <a href="#The-GCC-Compiler-Generation-Architecture">The GCC Compiler Generation Architecture</a>.  The  middle part is  described in
+<a href="#The-GCC-Build-System-Architecture">The GCC Build System Architecture</a>  and the  bottom part  is in
+<a href="#The-GCC-Compiler-Architecture">The GCC Compiler Architecture</a>.   Finally, <a href="#The-GCC-IRs">The GCC IRs</a>
+describes  the concepts  that go  in realising  these ideas  using the
+intermediate representations.
+
+</p><p><a name="The-Impact-of-Retargetability"></a>
+
+</p><h3 class="section">3.1 The Impact of Retargetability</h3>
+
+<p>From  the GCC  project point  of view  retargetability is  a desirable
+feature for  the project to be  useful to a broad  community of users. 
+GCC is also resourcable.<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>  Retargetability implies that
+the  target specific  information is  not available  at implementation
+time and  must be incorporated  at a later  point of time,  namely the
+<em>build time</em>,  denoted by <i>t<sub>build</sub></i>.   The build time  is a
+critical time  period in  GCC.  It separates  the GCC system  into two
+different   views   on  it's   either   sides   as   shown  below   in
+<a href="#fig_002dtime_002dline">fig-time-line</a>.
+
+   </p><div class="float">
+<a name="fig_002dtime_002dline"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gcc-time-durations.png" alt="gcc-time-durations.png"></div>
+
+   <p><strong class="float-caption">Figure 3.1: Important  time durations  in  GCC.  <i>t<sub>develop</sub></i>  is the  time
+during   which  a   given   version  of   GCC   is  being   developed. 
+<i>t<sub>build</sub></i>  is the  time during  which GCC  is  built, and
+<i>t<sub>run</sub></i> is  the time when the  binary is used  by programmers to
+compile their programs.  <i>t<sub>build</sub></i> may be further sharpened into
+<i>t<sub>gen</sub></i>  and  <i>t<sub>comp</sub></i>.    During  <i>t<sub>gen</sub></i>  the  GCC
+sources are  processed to  generate the target  specific parts  of the
+(retargetable) compiler  system created at  <i>t<sub>develop</sub></i>.  During
+<i>t<sub>comp</sub></i> the compilation of GCC starts to yield a binary.</strong></p></div>
+
+   <p>Before  <i>t<sub>build</sub></i>,  the  compiler  is being  developed  and  the
+architecture  described is  used by  the GCC  developer.  Implementing
+retargetability   in    GCC   at   development    time,   denoted   by
+<i>t<sub>develop</sub></i>, results  in three  logically distinct parts  of the
+compiler namely
+
+     </p><ol start="1" type="1">
+<li>the compiler code parameterized with respect to retargetability
+  issues,
+
+     </li><li>a set  of per target specifications of  the parameter “values”
+  listed for each supported target, and
+
+     </li><li>the “generator”  code that  will be  used to  incorporate the
+  target   information   selected    at   <i>t<sub>build</sub></i>   into   the
+  parameterized compiler code.
+        </li></ol>
+
+   <p>At the end of  <i>t<sub>develop</sub></i>, the compiler generation framework is
+ready in source form and  is distributed as versioned tarball from the
+official GCC website.  When the  compiler is built from the sources at
+<i>t<sub>build</sub></i>   the  specifications   of  the   chosen   target  are
+incorporated  into  the parameterised  code  resulting  in a  compiler
+source that  would yield a compiler  for the chosen  target.  Thus, at
+<i>t<sub>develop</sub></i>,  GCC exists  as  a parameterised  part  and set  of
+target  specifications.   The  conceptual   view  that  is  useful  to
+understand  GCC  at <i>t<sub>develop</sub></i>  is  described  in <a href="#The-GCC-Compiler-Generation-Architecture">The GCC Compiler Generation Architecture</a>.
+
+   </p><p>At  the end  of <i>t<sub>build</sub></i>  we  have a  complete target  specific
+compiler program  that programmers can use to  compile their programs. 
+These  times after  <i>t<sub>build</sub></i> when  the binary  is used  will be
+denoted by  <i>t<sub>run</sub></i>.  The architectural  view that is  useful to
+understand the operation of the compiler at <i>t<sub>run</sub></i> is described
+in  <a href="#The-GCC-Compiler-Architecture">The GCC Compiler Architecture</a>.  Occasionally  it  may  be
+necessary to  distinguish the system at <i>t<sub>build</sub></i>  into the time
+when the  target specific parts  of the compiler are  being generated,
+denoted by <i>t<sub>gen</sub></i> and  the subsequent compilation time, denoted
+by <i>t<sub>comp</sub></i>,  where the final  compiler binary is  created.  The
+views at  <i>t<sub>develop</sub></i> and  <i>t<sub>run</sub></i> come together  at build
+time <i>t<sub>build</sub></i>.   The compiler generation  framework implemented
+during  <i>t<sub>develop</sub></i>  is  used  to  obtain  the  target  specific
+compiler  (operation) phase  sequence at  <i>t<sub>run</sub></i> at  this time. 
+The operations that are required to occur at <i>t<sub>build</sub></i> forms the
+build  system described  in <a href="#The-GCC-Build-System-Architecture">The GCC Build System Architecture</a>. 
+<a href="#fig_002dtime_002dline">Figure 3.1</a> shows these time period labels.
+
+</p><p><a name="The-GCC-Compiler-Generation-Architecture"></a>
+
+</p><h3 class="section">3.2 The GCC Compiler Generation Architecture</h3>
+
+<p>Prior  to <i>t<sub>build</sub></i>  the GCC  system is  the system  that  a GCC
+developer  actually works  with.   The code  base  is made  up of  the
+parameterised  compiler and the  set of  target specifications  of the
+parameters.   We  refer  to   this  as  the  GCC  Compiler  Generation
+Framework,  or CGF for  short, or  simply GCC<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>.  The top  half of <a href="#fig_002dcgf">fig-cgf</a> shows the  major components of
+this part.
+
+   </p><div class="float">
+<a name="fig_002dcgf"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gcc-cgf-fig.png" alt="gcc-cgf-fig.png"></div>
+
+   <p><strong class="float-caption">Figure 3.2: The GCC Compiler  Generation Framework (CGF) and it's  use to generate
+the target specific compiler (cc1/gcc) components.  Some components of
+the compiler  (cc1/gcc) are <em>selected</em> from  the CGF, some
+are <em>copied</em> from the CGF  and some are <em>generated</em> from the
+framework.</strong></p></div>
+
+   <p>Since a number of different source languages are supported by GCC, the
+parsers and generisers  for each supported front end  form the details
+of the “language  specific code” component in this  block.  At build
+time  the  processing  code  of  the  chosen  front  end  language  is
+<em>selected</em> from  amongst the  available ones and  included.  Thus
+the front end developer view of the GCC system is just addition of the
+processing code which finally produces the AST/Generic representation.
+
+   </p><p>The CGF also contains code  that is independent of the characteristics
+of the  target system  or the front  end language.  For  instance, the
+gimplifier  converts the  generic  representation into  the gimple  IR
+(described in <a href="#The-Gimple-IR">The Gimple IR</a>).  The gimple IR  is independent of
+the target properties too,  and many machine independent optimisations
+that can  be performed on  this IR are  implemented in the  CGF.  Such
+code    is   simply    <em>copied</em><a rel="footnote" href="#fn-3" name="fnd-3"><sup>3</sup></a>   into the
+compiler created at  build time and is shown as the  second box in the
+“GCC” block of <a href="#fig_002dcgf">Figure 3.2</a>.  The  RTL expresses the Gimple code in
+a target specific manner.  However, the  code that works on the RTL IR
+can be  generically expressed  and is a  component of this  box.  This
+part forms the bulk of the compiler code.
+
+   </p><p>Perhaps  the most  interesting part  of the  CGF is  the code  that is
+dependent on  target properties, but has  been “parameterized”.  For
+instance, the target code generator of the compiler in operation needs
+to emit the target assembly code  in the syntax of the target assembly
+language!   Thus details  like the  layout structure  of  the assembly
+program  must   be  known.   Parameterization  is   a  consequence  of
+retargetability and  the CGF can then
+
+     </p><ul>
+<li><em>name</em>  the various target properties in  the main compiler
+  code, and
+
+     </li><li>separately <em>list</em> out their target specific values for each
+  target. 
+</li></ul>
+
+   <p>This is the  main emphasis at development time.   The parameter values
+are separately  listed at development time for  each supported target. 
+Most parameter  values can be  captured through simple  C preprocessor
+expressions.    However  some   “values”   like  expressing   target
+instruction semantics  need a better  mechanism than that  provided by
+the C preprocessing system.   But employing such a different mechanism
+invites developing a processing  system to incorporate the information
+into compiler!   Simply put, the  target machine descriptions  must be
+processed at  build time to <em>generate</em> the  target specific parts
+of  the  compiler.   This  processing  system  must  be  developed  at
+development time.  This is indicated in the third box.
+
+   </p><p>The set of machine descriptions  that GCC supports, i.e. for which the
+values  of  the  parameterised  entities  of the  compiler  have  been
+specified,  form the contents  of the  fourth box.   GCC uses  the RTL
+language to  capture the target  instruction semantics.  The  RTL also
+serves as the language for  IR at operation time <i>t<sub>run</sub></i>.  Using
+RTL for  both these purposes makes  it easy since  the data structures
+and operations are the same for both purposes.  At <i>t<sub>build</sub></i> one
+of the targets from this set is chosen and presented to the processing
+system to generate the target specific parts of the compiler.
+
+</p><p><a name="The-GCC-Compiler-Architecture"></a>
+
+</p><h3 class="section">3.3 The GCC Compiler Architecture</h3>
+
+<p>Once the target specific parts  of the compiler are generated from the
+CGF, we have a complete compiler  source code for the chosen front end
+HLL and  the chosen  target machine.  The  structure and  operation of
+this compiler,  which we refer  to as “gcc”<a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>    in   <a href="#fig_002dcgf">Figure 3.2</a>,  follows   the   approach  outlined   in
+<a href="#Language-Abstractions">Language Abstractions</a>, especially the  sequence pointed  out at
+the end of  <a href="#Abstraction-Gap">Abstraction Gap</a>.  <a href="#fig_002dgcc_002dphase_002dsequence">fig-gcc-phase-sequence</a> shows
+the relationship  between the lowering  of abstractions and  the phase
+sequence  of the “gcc”  compiler.  Additionally,  it also  shows the
+various  optimisation opportunities that  open up  at each  phase.  We
+have ignored  the processing  of the front  end and hence  the parsing
+phase  that starts  lowering the  procedure  (functions in  C) is  not
+shown<a rel="footnote" href="#fn-5" name="fnd-5"><sup>5</sup></a>.
+
+   </p><div class="float">
+<a name="fig_002dgcc_002dphase_002dsequence"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/abstraction-gap-and-gcc-phases.png" alt="abstraction-gap-and-gcc-phases.png"></div>
+
+   <p><strong class="float-caption">Figure 3.3: The  relationship  between the  GCC  phase  sequence  and sequence  of
+language abstract lowerings done one at a time.</strong></p></div>
+
+   <p>The RTL is the connecting link  between the CGF view and the operation
+view of the compiler.  In the  CGF it is used to <em>specify</em> target
+instruction  semantics.  In  operation, it  is used  to <em>express</em>
+computations in a target specific  manner.  We observe that the RTL is
+the  last IR  in the  phase sequence.   The gcc  compiler  attempts to
+perform  as  many target  independent  operations  as possible  before
+becoming  target  specific<a rel="footnote" href="#fn-6" name="fnd-6"><sup>6</sup></a>.  The input
+program is then represented in  RTL form that contains target specific
+information.  In particular, the input data representations, i.e. data
+structures and data  objects, are lowered.  The implicit  goal in this
+phase   is  to  perform   all  machine   dependent  operations   in  a
+<em>generic</em> manner so that  every RTL computation construct maps to
+at least one  target syntax.  One, therefore, expects  that at the end
+of this phase all that remains is converting the RTL representation to
+target assembly syntax.
+
+   </p><p>The phase  sequence of  <code>gcc</code> is captured  in the bottom  part of
+<a href="#fig_002dcgf">Figure 3.2</a>.  We  detail out the conceptual structure  of the Gimple
+and RTL IRs in <a href="#The-GCC-IRs">The GCC IRs</a>.
+
+</p><p><a name="The-GCC-Build-System-Architecture"></a>
+
+</p><h3 class="section">3.4 The GCC Build System Architecture</h3>
+
+<p>The CGF at  <i>t<sub>develop</sub></i> in the top half  of <a href="#fig_002dcgf">Figure 3.2</a>, needs
+to  be transformed  into the  compiler  architecture that  is used  at
+<i>t<sub>run</sub></i>  and shown  in  the bottom  half  of <a href="#fig_002dcgf">Figure 3.2</a>.   As
+discussed in <a href="#The-Impact-of-Retargetability">The Impact of Retargetability</a> the two views differ. 
+At <i>t<sub>develop</sub></i> there  is no notion of which  target the compiler
+is  to   generate  output   for.   Once  the   target  is   chosen  at
+<i>t<sub>build</sub></i> these target specific  parts need to be generated from
+the specifications  at <i>t<sub>develop</sub></i>.  In this  section we examine
+the architecture of this part of GCC.
+
+   </p><p>The above two  sections each point to the need  of using languages for
+their specific purposes.   The CGF requires a language  to specify the
+semantics of the target instructions.  The compiler that runs requires
+a  language to  represent a  compilation  internally.  It  is best  to
+consider that conceptually these are two separate languages.  We refer
+to  the   language  used  to   specify  target  instructions   as  the
+<em>“Machine Description RTL”</em> or  MD-RTL for short.  The language
+used to  represent a  program being compiled  by the compiler  will be
+referred  to  as  the  <em>“Intermediate Representation  RTL”</em>  or
+IR-RTL for  short.  At <i>t<sub>build</sub></i>,  then, we need to  convert the
+MD-RTL based information at <i>t<sub>develop</sub></i> into data structures and
+operations that would yield IR-RTL at <i>t<sub>run</sub></i>.  The MD-RTL based
+information   is  shown   in  the   box  labeled   “Set   of  Machine
+Descriptions” (fourth box) in the top half of <a href="#fig_002dcgf">Figure 3.2</a>.  The box
+labeled  “RTL   Generator”  (fifth  box)  in  the   bottom  half  of
+<a href="#fig_002dcgf">Figure 3.2</a>  stands  for the  internal  representation  in terms  of
+IR-RTL.   The arrows  labeled “Generated”  denote the  conversion at
+<i>t<sub>build</sub></i> from MD-RTL to IR-RTL.
+
+   </p><p>The implementation of the conversion is eased by choosing some part of
+the two languages, MD-RTL and IR-RTL, to be common.  This part is used
+to specify (at <i>t<sub>develop</sub></i>)  or represent (at <i>t<sub>run</sub></i>) the
+semantics  of  the target  instructions.   The current<a rel="footnote" href="#fn-7" name="fnd-7"><sup>7</sup></a>   GCC  documentation does  not  distinguish  between these  two
+separate languages.  Instead both the languages are simply referred to
+as “RTL” often  leading to confusion.  <a href="#The-RTL">The RTL</a> describes
+these two languages in detail.
+
+   </p><p>At    <i>t<sub>build</sub></i>,   the    MD-RTL   based    specifications   are
+<em>selected</em>  according to  the  chosen target  and transformed  to
+<em>generate</em> the  IR-RTL based target  specific parts of  the final
+compiler.  It is  because of the generation of  target specific source
+code from the  target properties specifications at build  time that we
+refer  to  GCC  prior  to  <i>t<sub>build</sub></i> as  a  Compiler  Generation
+Framework.
+
+   </p><p>Thus  two crucial  steps must  be taken  at <i>t<sub>build</sub></i>  given the
+chosen target:
+     </p><ol start="1" type="1">
+<li>The parameterised information in  the header files of the chosen
+  target must be included into the source tree, and
+</li><li>the  MD-RTL based target  specifications must be  processed to
+  obtain a IR-RTL based representation system.
+        </li></ol>
+On  completing these steps  we have  a compiler  source code  that has
+front  end processing code  for the  “selected” HLL,  the “copied”
+main body of  the compiler and the “generated”  target specific code
+for the chosen target as shown in <a href="#fig_002dcgf">Figure 3.2</a>.  This source is
+then compiled to obtain the compiler binary.
+
+<p><a name="The-GCC-IRs"></a>
+
+</p><h3 class="section">3.5 The GCC IRs</h3>
+
+<p>GCC 4.0.2 uses three IRs:  The AST/Generic, the Gimple and the IR-RTL. 
+The  AST is the  output of  the front  end parser  and depends  on the
+particular language  features.  Since  the parser starts  the lowering
+process the moment  a function is found in the input,  we say that GCC
+handles  procedural abstractions  first.  Generic  is intended  as the
+common IR to which front end ASTs are reduced to.  However the AST and
+Generic have not been well separated as yet, and we consider them as a
+single IR called AST/Generic.  At  this level, GCC starts handling the
+name space abstractions of C.  The local scope variables are marked so
+that the later  phases can lower them.  The Gimple is  a front end and
+back end independent IR that lowers the control flow.
+
+   </p><p>The most interesting  IR in GCC is the IR-RTL  – a syntactically Lisp
+like IR.  GCC  attempts to capture all target  specific information in
+the IR-RTL representation.  This  is required since the final lowering
+to target specific code requires a knowledge of the target properties. 
+IR-RTL lowers the data  abstractions, and the target specific lowering
+of  the  other  abstractions.   In  particular, it  unfolds  the  data
+structures  into bits, bytes,  words etc.   sequences and  creates the
+activation record<a rel="footnote" href="#fn-8" name="fnd-8"><sup>8</sup></a>.  Lifetime  rules of
+local variables are  handled by placing them on  the activation record
+under  a stack  discipline.  The  activation record  also  handles the
+implementation of the procedural abstraction.
+
+   </p><p>An  implicit goal  of  the IR-RTL  IR  is to  do  all target  specific
+manipulations  as completely as  possible so  that at  the end  of the
+IR-RTL passes, the program representation contains all the information
+of the assembly language version except for the syntactic details.
+
+   </p><p>Thus     the     overall    gcc     phase     sequence    shown     in
+<a href="#fig_002dgcc_002dphase_002dsequence">Figure 3.3</a> can  be written as:  (parser : procedural
+abstraction)  –&gt; (Generic  :  name space  abstraction)
+–&gt;    (Gimple     :    control    flow    abstraction)
+–&gt;  (IR-RTL  : data  abstraction),  where “(parser  :
+procedural  abstraction)”  reads as  “parser  deals with  procedural
+abstraction”,  and  “–&gt;”  reads as  “lowers  to”. 
+Each phase  deals with lowering  a particular HLL abstraction  and has
+it's own  IR designed  for that purpose.<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a>  The compilation process occursduring
+the  chaining of  these phases  where a  transition is  made  from the
+representation  in a  given phase  to the  representation in  the next
+phase.  Each transition can be realized as a translation table.
+
+   </p><p>The next section details these ideas for the Gimple IR.  The IR-RTL is
+used to construct the IR at <i>t<sub>run</sub></i> and is detailed as a part of
+the RTL in section <a href="#The-RTL">The RTL</a>.
+
+</p><p><a name="The-Gimple-IR"></a>
+
+</p><h2 class="chapter">4 The Gimple IR</h2>
+
+<p>Section  <a href="#The-GCC-IRs">The GCC IRs</a>  mentioned  the IRs  that  GCC  uses  and
+indicated  that  the  compilation   is  effected  by  translating  the
+representation in  one IR to  the next through translation  tables for
+each.  In  this section, we  expand the concept for  Gimple.  Ignoring
+the front end, gcc will have a Generic to Gimple translation table and
+a  Gimple to  IR-RTL translation  table.  Note  that the  former  is a
+target independent table  and the latter is a  target dependent table. 
+This implies  that the  former table can  be expressed in  the generic
+part of GCC at <i>t<sub>develop</sub></i>  but the latter table cannot be.  For
+the Gimple  to IR-RTL translation table,  the Gimple part  is known at
+<i>t<sub>develop</sub></i>   but   the   IR-RTL    part   is   not   known   at
+<i>t<sub>develop</sub></i>.  At <i>t<sub>develop</sub></i> the Gimple to IR-RTL table is
+incomplete.  It  is completed at <i>t<sub>build</sub></i> time  when the IR-RTL
+part of the table is generated from the specifications of the target.
+
+   </p><p>The Generic to Gimple table is detailed in section <a href="#The-Gimple-IR">The Gimple IR</a>
+and the Gimple  to IR-RTL table requires two  different views: the one
+at  <i>t<sub>develop</sub></i> is  described in  section  <a href="#Development-time-Gimple-to-IR_002dRTL-conversion-issues">Development time Gimple to IR-RTL conversion issues</a>  and the one at <i>t<sub>build</sub></i> is
+in section  <a href="#Build-time-Gimple-to-IR_002dRTL-conversion-issues">Build time Gimple to IR-RTL conversion issues</a>.  The
+RTL subsystem of GCC (section  <a href="#The-RTL">The RTL</a>) requires a more detailed
+treatment.
+
+   </p><p>In  Gimple, the  data objects  retain  their form  in the  AST/Generic
+machine.   The  code   objects  <code>do</code>,  <code>while</code>,  <code>for</code>,
+<code>break</code>,  <code>switch</code>,  <code>continue</code>  from  the  AST/Generic
+representation  are re-expressed using  the <code>if</code>  and <code>goto</code>
+statements.  In other words, representation  in terms of the Gimple IR
+lowers  the control  flow abstractions.   For all  other  purposes the
+Gimple machine is identical to the C machine.  Until about GCC version
+4.3, the data structures for Gimple representation have been identical
+to the  Generic tree structures.   Recently they have been  changed to
+Gimple  tuples.  We  discuss the  tree based  structures.   The Gimple
+representation also simplifies complex  expressions to a set of simple
+expressions  by introducing  any  additional temporaries  that may  be
+required.  Lowering only the control flow enables implementing control
+flow based machine independent optimizations through representation in
+static single  assignment (SSA) form.  The GCC  community often refers
+to  Gimple representation  as Tree-SSA  form.   The Gimple  is thus  a
+target  and source  language independent  IR, and  hence the  views at
+development  time and  operation  time are  identical  except for  the
+details  of the conversion  to the  IR-RTL representation.   Since the
+Gimple is target  independent and the IR-RTL is  target dependent, the
+design, build and operation of  the conversion is complex process that
+is  described  in  sections~<a href="#Development-time-Gimple-to-IR_002dRTL-conversion-issues">Development time Gimple to IR-RTL conversion issues</a> and  <a href="#Build-time-Gimple-to-IR_002dRTL-conversion-issues">Build time Gimple to IR-RTL conversion issues</a>
+
+   </p><p>The  Gimple nodes  are a  subset of  the AST/Generic  nodes.   All the
+AST/Generic nodes are  listed in the <samp><span class="file">$GCCHOME/gcc/tree.def</span></samp> file
+in the GCC code base at <i>t<sub>develop</sub></i>, where <samp><span class="env">$GCCHOME</span></samp> is the
+location on  the file  system where the  pristine GCC  (4.0.2) sources
+have been extracted.   Table <a href="#tab_002dc_002dgimple_002dnodes">tab-c-gimple-nodes</a> lists the Gimple
+node types for the C front end.
+
+   </p><div class="float">
+<a name="tab_002dc_002dgimple_002dnodes"></a>
+
+   <p><table summary=""><tbody><tr align="left"><td valign="top" width="33%"><code>lt_expr</code>    </td><td valign="top" width="33%">
+<code>le_expr</code>    </td><td valign="top" width="33%">
+<code>gt_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>ge_expr</code>    </td><td valign="top" width="33%">
+<code>eq_expr</code>    </td><td valign="top" width="33%">
+<code>ne_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>unordered_expr</code>    </td><td valign="top" width="33%">
+<code>ordered_expr</code>    </td><td valign="top" width="33%">
+<code>unlt_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>unle_expr</code>    </td><td valign="top" width="33%">
+<code>ungt_expr</code>    </td><td valign="top" width="33%">
+<code>unge_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>uneq_expr</code>    </td><td valign="top" width="33%">
+<code>fix_trunc_expr</code>    </td><td valign="top" width="33%">
+<code>fix_ceil_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>fix_floor_expr</code>    </td><td valign="top" width="33%">
+<code>fix_round_expr</code>    </td><td valign="top" width="33%">
+<code>float_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>negate_expr</code>    </td><td valign="top" width="33%">
+<code>abs_expr</code>    </td><td valign="top" width="33%">
+<code>ffs_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>bit_not_expr</code>    </td><td valign="top" width="33%">
+<code>convert_expr</code>    </td><td valign="top" width="33%">
+<code>nop_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>non_lvalue_expr</code>    </td><td valign="top" width="33%">
+<code>view_convert_expr</code>    </td><td valign="top" width="33%">
+<code>conj_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>realpart_expr</code>    </td><td valign="top" width="33%">
+<code>imagpart_expr</code>    </td><td valign="top" width="33%">
+<code>sizeof_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>alignof_expr</code>    </td><td valign="top" width="33%">
+<code>plus_expr</code>    </td><td valign="top" width="33%">
+<code>minus_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>mult_expr</code>    </td><td valign="top" width="33%">
+<code>trunc_div_expr</code>    </td><td valign="top" width="33%">
+<code>ceil_div_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>floor_div_expr</code>    </td><td valign="top" width="33%">
+<code>round_div_expr</code>    </td><td valign="top" width="33%">
+<code>trunc_mod_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>ceil_mod_expr</code>    </td><td valign="top" width="33%">
+<code>floor_mod_expr</code>    </td><td valign="top" width="33%">
+<code>round_mod_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>rdiv_expr</code>    </td><td valign="top" width="33%">
+<code>exact_div_expr</code>    </td><td valign="top" width="33%">
+<code>min_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>max_expr</code>    </td><td valign="top" width="33%">
+<code>lshift_expr</code>    </td><td valign="top" width="33%">
+<code>rshift_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>lrotate_expr</code>    </td><td valign="top" width="33%">
+<code>rrotate_expr</code>    </td><td valign="top" width="33%">
+<code>bit_ior_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>bit_xor_expr</code>    </td><td valign="top" width="33%">
+<code>bit_and_expr</code>    </td><td valign="top" width="33%">
+<code>bit_andtc_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>complex_expr</code>    </td><td valign="top" width="33%">
+<code>block</code>     </td><td valign="top" width="33%">
+<code>integer_cst</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>real_cst</code>     </td><td valign="top" width="33%">
+<code>complex_cst</code>    </td><td valign="top" width="33%">
+<code>vector_cst</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>string_cst</code>    </td><td valign="top" width="33%">
+<code>function_decl</code>     </td><td valign="top" width="33%">
+<code>label_decl</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>const_decl</code>     </td><td valign="top" width="33%">
+<code>type_decl</code>    </td><td valign="top" width="33%">
+<code>var_decl</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>parm_decl</code>    </td><td valign="top" width="33%">
+<code>result_decl</code>     </td><td valign="top" width="33%">
+<code>field_decl</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>namespace_decl</code>     </td><td valign="top" width="33%">
+<code>compound_expr</code>    </td><td valign="top" width="33%">
+<code>modify_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>init_expr</code>    </td><td valign="top" width="33%">
+<code>target_expr</code>     </td><td valign="top" width="33%">
+<code>cond_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>bind_expr</code>     </td><td valign="top" width="33%">
+<code>call_expr</code>    </td><td valign="top" width="33%">
+<code>with_cleanup_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>cleanup_point_expr</code>    </td><td valign="top" width="33%">
+<code>with_record_expr</code>     </td><td valign="top" width="33%">
+<code>truth_andif_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>truth_orif_expr</code>     </td><td valign="top" width="33%">
+<code>truth_and_expr</code>    </td><td valign="top" width="33%">
+<code>truth_or_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>truth_xor_expr</code>    </td><td valign="top" width="33%">
+<code>truth_not_expr</code>     </td><td valign="top" width="33%">
+<code>save_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>unsave_expr</code>     </td><td valign="top" width="33%">
+<code>rtl_expr</code>    </td><td valign="top" width="33%">
+<code>addr_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>reference_expr</code>    </td><td valign="top" width="33%">
+<code>entry_value_expr</code>     </td><td valign="top" width="33%">
+<code>fdesc_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>predecrement_expr</code>     </td><td valign="top" width="33%">
+<code>preincrement_expr</code>    </td><td valign="top" width="33%">
+<code>postdecrement_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>postincrement_expr</code>    </td><td valign="top" width="33%">
+<code>va_arg_expr</code>     </td><td valign="top" width="33%">
+<code>goto_subroutine</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>labeled_block_expr</code>     </td><td valign="top" width="33%">
+<code>expr_with_file_location</code>    </td><td valign="top" width="33%">
+<code>exit_block_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>arrow_expr</code>     </td><td valign="top" width="33%">
+<code>expr_stmt</code>    </td><td valign="top" width="33%">
+<code>compound_stmt</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>decl_stmt</code>    </td><td valign="top" width="33%">
+<code>if_stmt</code>     </td><td valign="top" width="33%">
+<code>return_stmt</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>goto_stmt</code>     </td><td valign="top" width="33%">
+<code>label_stmt</code>    </td><td valign="top" width="33%">
+<code>asm_stmt</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>scope_stmt</code>    </td><td valign="top" width="33%">
+<code>file_stmt</code>     </td><td valign="top" width="33%">
+<code>case_label</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>stmt_expr</code>     </td><td valign="top" width="33%">
+<code>compound_literal_expr</code>    </td><td valign="top" width="33%">
+<code>cleanup_stmt</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>component_ref</code>    </td><td valign="top" width="33%">
+<code>bit_field_ref</code>     </td><td valign="top" width="33%">
+<code>indirect_ref</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>array_ref</code>     </td><td valign="top" width="33%">
+<code>array_range_ref</code>    </td><td valign="top" width="33%">
+<code>label_expr</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>goto_expr</code>    </td><td valign="top" width="33%">
+<code>return_expr</code>     </td><td valign="top" width="33%">
+<code>exit_expr</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>void_type</code>    </td><td valign="top" width="33%">
+<code>integer_type</code>     </td><td valign="top" width="33%">
+<code>real_type</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>enumeral_type</code>     </td><td valign="top" width="33%">
+<code>pointer_type</code>    </td><td valign="top" width="33%">
+<code>offset_type</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>reference_type</code>    </td><td valign="top" width="33%">
+<code>array_type</code>     </td><td valign="top" width="33%">
+<code>record_type</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>union_type</code>     </td><td valign="top" width="33%">
+<code>qual_union_type</code>    </td><td valign="top" width="33%">
+<code>function_type</code>    <br></td></tr><tr align="left"><td valign="top" width="33%"><code>error_mark</code>    </td><td valign="top" width="33%">
+<code>identifier_node</code>     </td><td valign="top" width="33%">
+<code>tree_list</code>   <br></td></tr><tr align="left"><td valign="top" width="33%"><code>tree_vec</code>     </td><td valign="top" width="33%">
+<code>placeholder_expr</code>    </td><td valign="top" width="33%">
+<code>srcloc</code>
+   <br></td></tr></tbody></table>
+</p><p><strong class="float-caption">Table 4.1: The Gimple nodes.</strong></p></div>
+
+   <p>A Gimple representation of input  function is a “tree” of nodes.  It
+corresponds  to  a  linearised  control  flow  representation  of  the
+AST/Generic  tree and  hence  actually is  more  of a  linear list  of
+“tree”  nodes.  A  Gimple node  is represented  using  the following
+(annotated) structure in the file <samp><span class="file">$GCCHOME/gcc/tree.h</span></samp>:
+
+</p><pre class="verbatim">struct tree_common
+{
+  tree chain;                 /* Chaining ptr */
+  tree type;                  /* Expression type ptr */
+  union tree_ann_d *ann;
+
+  ENUM_BITFIELD(tree_code) code : 8; /* Node type (tree.def) */
+
+  /* Various flags */
+  unsigned side_effects_flag : 1;
+  unsigned constant_flag : 1;
+  unsigned addressable_flag : 1;
+  unsigned volatile_flag : 1;
+  unsigned readonly_flag : 1;
+  unsigned unsigned_flag : 1;
+  unsigned asm_written_flag: 1;
+  unsigned nowarning_flag : 1;
+
+  unsigned used_flag : 1;
+  unsigned nothrow_flag : 1;
+  unsigned static_flag : 1;
+  unsigned public_flag : 1;
+  unsigned private_flag : 1;
+  unsigned protected_flag : 1;
+  unsigned deprecated_flag : 1;
+  unsigned invariant_flag : 1;
+
+  unsigned lang_flag_0 : 1;
+  unsigned lang_flag_1 : 1;
+  unsigned lang_flag_2 : 1;
+  unsigned lang_flag_3 : 1;
+  unsigned lang_flag_4 : 1;
+  unsigned lang_flag_5 : 1;
+  unsigned lang_flag_6 : 1;
+  unsigned visited : 1;
+};
+</pre>
+
+   <p>This  structure represents  information  common to  every Gimple  node
+type.   More specific  information of  each node  type resides  in the
+corresponding structure declarations in <samp><span class="file">$GCCHOME/gcc/tree.h</span></samp>.
+
+   </p><p>Lowering the control flow is  done by replacing control flow nodes for
+loop  constructs (<code>for</code>, <code>while</code>  etc.)  and  complex branch
+constructs  (<code>switch</code>)  with  simple  conditional  control  flow,
+<code>if</code>, and the  unrestricted branch, <code>goto</code>.  The AST/Generic
+to Gimple translation table is directly implemented as a case analysis
+over  the  code  nodes  above  in  <samp><span class="file">$GCCHOME/gcc/gimple.c</span></samp>.   The
+translation is initiated by the function <code>gimplify_function_tree
+  ()</code> with the translation table in the function <code>gimplify_expr
+  ()</code>.
+
+</p><p><a name="Development-time-Gimple-to-IR-RTL-conversion-issues"></a>
+<a name="Development-time-Gimple-to-IR_002dRTL-conversion-issues"></a>
+
+</p><h3 class="section">4.1 Gimple –&gt; IR-RTL Conversion Issues at <i>t<sub>develop</sub></i></h3>
+
+<p>One  critical  part  of  GCC  is  the  implementation  of  the  Gimple
+–&gt; IR-RTL translation required at <i>t<sub>run</sub></i>.  This
+is critical since the Gimple is target independent while the IR-RTL is
+target  specific.  The  problem then  is to  design and  implement the
+translation at <i>t<sub>develop</sub></i> given that the actual target would be
+known      only      at      <i>t<sub>build</sub></i>     as      shown      in
+<a href="#fig_002dgimple_002dto_002drtl_002dproblem">fig-gimple-to-rtl-problem</a>.
+
+   </p><div class="float">
+<a name="fig_002dgimple_002dto_002drtl_002dproblem"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gimple-to-rtl-translation-problem.png" alt="gimple-to-rtl-translation-problem.png"></div>
+
+   <p><strong class="float-caption">Figure 4.1: The   Gimple  –&gt;  IR-RTL   translation  is   required  at
+<i>t<sub>run</sub></i>.   It  must  be  implemented  at  <i>t<sub>develop</sub></i>  and
+converted at <i>t<sub>build</sub></i>.</strong></p></div>
+
+   <p>The  GCC  technique  is  to  separate  the two  parts  –  the  target
+independent Gimple and  the target specific IR-RTL –  of the table at
+<i>t<sub>develop</sub></i>, and  join them at  <i>t<sub>build</sub></i>.  The separation
+at  <i>t<sub>develop</sub></i>   only  separates  the   table  data  structure. 
+However, the use  of the data structure in  performing the translation
+can  still   be  implemented   at  <i>t<sub>develop</sub></i>.   As   shown  in
+<a href="#fig_002dgimple_002dto_002drtl_002dsoln">fig-gimple-to-rtl-soln</a>,  at  <i>t<sub>develop</sub></i>,  therefore,  GCC
+does the following:
+
+   </p><div class="float">
+<a name="fig_002dgimple_002dto_002drtl_002dsoln"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gimple-to-rtl-translation-solution.png" alt="gimple-to-rtl-translation-solution.png"></div>
+
+   <p><strong class="float-caption">Figure 4.2: At   <i>t<sub>develop</sub></i>,  the   Gimple   –&gt;  IR-RTL
+translation  is  separated  into  two tables  connected  by  “Pattern
+Names”   (“PN”).   The  “Gimple   –&gt;  PN”   part  is
+implemented  in  the  language  independent  code base  and  the  “PN
+–&gt;   MD-RTL”  part   is  implemented   in   the  machine
+descriptions.   At  <i>t<sub>build</sub></i>,  the “PN  –&gt;
+MD-RTL”  part  is  converted  to  obtain the  IR-RTL  based  “Gimple
+–&gt; IR-RTL” table.   The “generation” code required for
+the conversion is implemented at <i>t<sub>develop</sub></i>.</strong></p></div>
+
+     <ul>
+<li>implements the Gimple part of the table,
+
+     </li><li>implements the target specifications in the RTL language, and
+
+     </li><li>implements the  <em>generation</em> code  that would  be  used at
+<i>t<sub>build</sub></i> to generate  the IR-RTL part of the  table using the
+target  specifications.
+
+   </li></ul>
+
+   <p>To  facilitate the  joining, GCC  needs some  mechanism to  specify at
+development time  <i>t<sub>develop</sub></i> the semantic  identity between the
+Gimple part  and the IR-RTL part  of the translation  table.  In other
+words, it  needs to find  out which IR-RTL  pattern can cover  a given
+Gimple  subtree.   GCC  does  this statically  by  defining  arbitrary
+strings, called “pattern names” (PN), some of which are “standard”
+(SPN).  Conceptually,  the PNs give  rise to two distinct  tables: the
+Gimple to PN and the PN to IR-RTL.  The first table can be implemented
+at <i>t<sub>develop</sub></i> while the  second can be implemented using IR-RTL
+based specification  system at <i>t<sub>develop</sub></i> and  converted to the
+IR-RTL  table at  <i>t<sub>build</sub></i>.   This is  pictorially depicted  in
+<a href="#fig_002dsep_002dtab">fig-sep-tab</a>
+
+   </p><div class="float">
+<a name="fig_002dsep_002dtab"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gimple-to-rtl-ff-separation.png" alt="gimple-to-rtl-ff-separation.png"></div>
+
+   <p><strong class="float-caption">Figure 4.3: Separating  the  Gimple to  IR-RTL  translation  finite function  into
+target independent LHS  and target dependent RHS at  design time.  The
+<code>  MODIFY_EXPR</code>   is  a  Gimple  construct   that  represents  an
+assignment operation.  The <code> (set (&lt;dest&gt; (&lt;src&gt;)))</code> is an IR-RTL
+construct that represents the same operation in a target specific way. 
+The “<code>  movsi</code>” is an SPN  that logically glues  the two sides. 
+(CGF: Compiler Generation Framework; see text.)</strong></p></div>
+
+<p class="noindent">which  describes the  concepts behind  the separation  of  the desired
+table (at the top) into the two tables (at the bottom).  The syntactic
+issues  of  the implementation  in  the  machine  description will  be
+discussed in section <a href="#MD_002dRTL-_002d-Describing-Target-Machines">MD-RTL - Describing Target Machines</a>.
+
+</p><p><a name="Build-time-Gimple-to-IR-RTL-conversion-issues"></a>
+<a name="Build-time-Gimple-to-IR_002dRTL-conversion-issues"></a>
+
+</p><h3 class="section">4.2 Gimple –&gt; IR-RTL Conversion Issues at <i>t<sub>build</sub></i></h3>
+
+<p>Having  separated  the  Gimple –&gt;  IR-RTL  translation
+table at  development time and implemented  code to join  them back at
+build time,  we now conceptually  expose the events that  occur during
+<i>t<sub>build</sub></i>.   <a href="#fig_002djoin_002dtab">fig-join-tab</a> explains  them.   The figure  is
+divided into
+
+   </p><div class="float">
+<a name="fig_002djoin_002dtab"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/gimple-to-rtl-joining-ff.png" alt="gimple-to-rtl-joining-ff.png"></div>
+
+   <p><strong class="float-caption">Figure 4.4: Joining  the  Gimple  to  IR-RTL translation  finite  function  target
+independent   LHS   (<code>optab[]</code>)    and   target   dependent   RHS
+(<code>insn_data[]</code>)  at   build  time,  <i>t<sub>build</sub></i>.   The
+contents  of  <code>  insn_data[]</code>   are  from  the  selected  machine
+description.   Above  the  dashed  line  we have  the  GCC  system  as
+developed during  <i>t<sub>develop</sub></i>.  Below  the dashed lines  we have
+the situation at <i>t<sub>build</sub></i>.</strong></p></div>
+
+   <p>two parts by the dashed line.   Above the line we depict the situation
+at  <i>t<sub>develop</sub></i> and  below the  line  we have  the situation  at
+<i>t<sub>build</sub></i>.  At  <i>t<sub>develop</sub></i>, GCC is  the implementation of
+the  target  independent part  of  the  Gimple –&gt;  IR-RTL
+table, and  a collection of machine  descriptions (MD_1 <small class="dots">...</small>
+MD_n) that each implement the target specific (the IR-RTL) part
+of  that  table.   One  of  the  machine  descriptions  is  chosen  at
+<i>t<sub>build</sub></i>.  The  MD-RTL specifications  are converted to  C code
+and  the RTL  expression of  PN is  stored in  the  array <code>struct
+insn_data  []</code>.   The  indices  into  this array  are  stored  in  the
+<code>struct optab []</code> array which is itself arranged according to the
+PNs.  Since the PN for a given Gimple node is known, the <code> optab</code>
+array is can  be used to obtain the index  of the corresponding IR-RTL
+pattern.   It  is  in  this  sense  that  the  PNs  are  converted  to
+“indices” and  are used  to join the  separated parts of  the Gimple
+–&gt; IR-RTL table.  Note that the <code>insn_data []</code> array
+is filled  in the sequence written  in the machine  description by the
+machine description author.
+
+</p><p><a name="Operation-time-Gimple-to-IR-RTL-conversion"></a>
+<a name="Operation-time-Gimple-to-IR_002dRTL-conversion"></a>
+
+</p><h3 class="section">4.3 Gimple –&gt; IR-RTL Conversion at <i>t<sub>run</sub></i></h3>
+
+<p>At the end of  <i>t<sub>build</sub></i> the Gimple –&gt; IR-RTL table
+for the chosen target is complete  and can be used at <i>t<sub>run</sub></i> to
+perform the translation.  The  Gimple representation is traversed in a
+depth  first manner.   The child  nodes that  (usually)  represent the
+operands are thus first expanded  to RTXs representing the operands –
+typically RTXs that represent  pseudoregisters, but could also be home
+locations.  Given  a Gimple node, the <code>optab</code>  table is consulted
+to   obtain  the  location   of  the   corresponding  IR-RTL   in  the
+<code>insn_data</code>   table.    Using    this   index   to   lookup   the
+<code>insn_data</code>  table  yields  the  <em>function</em> that  emits  the
+IR-RTX of the Gimple node.  This function is called to emit the IR-RTX
+with  the generated operand  RTXs passed  as arguments.   The complete
+program is thus a linear (doubly) linked list of IR-RTXs.
+
+</p><p><a name="The-RTL"></a>
+
+</p><h2 class="chapter">5 The RTL</h2>
+
+<p>The main point of section <a href="#The-GCC-System">The GCC System</a> is that three different
+time  periods, <i>t<sub>develop</sub></i>,  <i>t<sub>build</sub></i>  and <i>t<sub>run</sub></i>,
+need different  mental views to  understand their structure.   The GCC
+system at  <i>t<sub>develop</sub></i> and the  gcc system at  <i>t<sub>run</sub></i> are
+connected through the RTL  representation that undergoes conversion at
+<i>t<sub>build</sub></i> from form at <i>t<sub>develop</sub></i>  to the form to be used
+at  <i>t<sub>run</sub></i>.  This  section  describes the  purpose  of the  RTL
+system  and   the  consequent  two  languages  for   each  purpose  in
+<a href="#The-Two-Languages-_002d-MD_002dRTL-and-IR_002dRTL">The Two Languages - MD-RTL and IR-RTL</a>.
+
+<!-- @node The RTL Core Memory -->
+<!-- @section The RTL Core Memory -->
+</p><p><a name="Some-RTL-Concepts"></a>
+
+</p><h3 class="section">5.1 Some RTL Concepts</h3>
+
+<p>The  RTL  subsystem abstracts  out  the  essential characteristics  of
+typical  hardware.   It conceptually  uses
+two  semi-infinite discrete  memories that  we  call as  the RTL  core
+memory and the RTL pseudoregisters.  These are conceptual objects that
+mimic  the  primary  memory  and  register sets  respectively  of  the
+supported CPUs.
+
+   </p><p>One  memory, called  the RTL  core  memory, represents  the layout  in
+virtual memory of the real target, and is linear and byte addressable. 
+The RTL  memory model is  close to most  target hardware and  the data
+abstraction gap  is quite  small.  The mapping  of RTL core  memory to
+target  memory is  done  on a  per  target basis  in  the GCC  machine
+description  system  through a  set  of  C  preprocessor macros.   The
+information is incorporated into  the compiler at compiler build time. 
+Conceptually, the  Gimple objects  will be mapped  to RTL  memory, and
+then be  lowered to target memory.   Note that as a  result of mapping
+Gimple objects to  a linear addressable memory, the  named objects now
+can have  computable addresses.  In  other words, the name  to address
+association can now  be determined.  The RTL provides  data types that
+are fractions and multiples of the word size similar to typical target
+hardware.
+
+   </p><p>The other  type of unbounded  memory that RTL  has is a set  of pseudo
+registers.   The  RTL  register   tape  is  used  to  allocate  pseudo
+registers.  During  the conversion  from Gimple representation  to RTL
+representation, objects are allocated fresh pseudo registers from this
+semi  infinite pool.   In later  phases, when  register  allocation is
+performed, the program  objects get the hard registers  or are spilled
+on to the RTL core memory.  Different targets have different number of
+registers.  The RTL register memory designates the first $N$ registers
+to correspond to  the $N$ hardware registers of  the target.  Thus the
+actual pseudo  registers start from the N^th  location in the
+RTL register tape since the registers are indexed starting from zero.
+
+</p><p><a name="The-Two-Languages---MD-RTL-and-IR-RTL"></a>
+<a name="The-Two-Languages-_002d-MD_002dRTL-and-IR_002dRTL"></a>
+
+</p><h3 class="section">5.2 The Two Languages: MD-RTL and IR-RTL</h3>
+
+<p>The RTL subsystem of GCC is used for two distinct purposes in GCC:
+
+     </p><ol start="1" type="1">
+
+     <li>specification of target instruction semantics at <i>t<sub>develop</sub></i>, and
+
+     </li><li>representation of a program being compiled at <i>t<sub>run</sub></i>.
+        </li></ol>
+
+   <p>At <i>t<sub>develop</sub></i> the RTL is in human readable MD-RTL form while at
+<i>t<sub>run</sub></i> it  is in machine  readable IR-RTL form.<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a>   The IR-RTL
+form is the  result of compiling a C  representation that is generated
+at <i>t<sub>build</sub></i> from the MD-RTL specifications.
+
+</p><p><a name="MD-RTL---Capturing-Target-Instruction-Semantics"></a>
+<a name="MD_002dRTL-_002d-Capturing-Target-Instruction-Semantics"></a>
+
+</p><h4 class="subsection">5.2.1 MD-RTL: Capturing Target Instruction Semantics</h4>
+
+<p>To <em>specify</em> the semantics of a target instruction, we need to:
+
+     </p><ul>
+<li><em>capture</em> the semantics of the instruction, and
+
+     </li><li><em>describe</em> it's properties that are relevant at <i>t<sub>run</sub></i>. 
+</li></ul>
+
+   <p>The  specification process is  analogous to  the emulation  of another
+processor,  say  a MIPS,  on  a given  processor,  say  an i386.   The
+operational part  of a target  (say MIPS) instruction can  be captured
+using the operations of a  given processor (i386).  Next, the operands
+have to be  mapped.  Some information of this part  can be captured at
+<i>t<sub>develop</sub></i>, for instance the  sizes.  The rest, like the actual
+values, cannot be as they  are run time dependent.  However the nature
+of the values, integer or floating point and such, can be specified at
+<i>t<sub>develop</sub></i>.  The MD-RTL language is made up of a few constructs
+used to describe the target  instruction properties and operators of a
+fictitious processor to capture  target instruction semantics as shown
+in <a href="#fig_002dmd_002drtl_002dlanguage">fig-md-rtl-language</a>.
+
+   </p><div class="float">
+<a name="fig_002dmd_002drtl_002dlanguage"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/md-rtl-language.png" alt="md-rtl-language.png"></div>
+
+   <p><strong class="float-caption">Figure 5.1: The MD-RTL language.  The  MD constructs describe properties of target
+instructions and  the operators (of the  fictitious processor) capture
+the target instruction semantics.</strong></p></div>
+
+<p><a name="IR-RTL---Expressing-a-Compilation"></a>
+<a name="IR_002dRTL-_002d-Expressing-a-Compilation"></a>
+
+</p><h4 class="subsection">5.2.2 IR-RTL: Expressing a Compilation</h4>
+
+<p>To  <em>express</em>  a  program  being  compiled  in  an  IR-RTL  based
+target specific (linear) representation, we need to:
+
+     </p><ul>
+<li><em>express</em> the target  specific semantics of the instruction
+  in the sequence, and
+
+     </li><li><em>describe</em> it's control flow properties and layout that are
+  relevant at <i>t<sub>run</sub></i>. 
+</li></ul>
+
+   <p>This expression process is analogous  to writing the program in target
+assembly code, but in a  target independent, IR-RTL based syntax.  The
+operational part  of a target  instruction can be expressed  using the
+same operators  used in the  MD-RTL specification language.   Thus the
+operators used  in the IR-RTL  are the same  as those used  in MD-RTL. 
+Next, the  layout can be  described by augmenting the  expression with
+the   linking  information   about  the   predecessor   and  successor
+expressions.  In  case the expression, i.e. the  operational part, has
+branching  semantics,  an explicit  <code>jump</code>  or <code>return</code>  for
+example, then such control flow effects are separately described.  The
+IR-RTL language  is shown in <a href="#fig_002dir_002drtl_002dlanguage">fig-ir-rtl-language</a> and  is made up
+of the  same operators  as the MD-RTL  and additional  constructs that
+describe   the  other  aspects   of  intermediate   representation  at
+<i>t<sub>run</sub></i>.
+
+   </p><div class="float">
+<a name="fig_002dir_002drtl_002dlanguage"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/ir-rtl-language.png" alt="ir-rtl-language.png"></div>
+
+   <p><strong class="float-caption">Figure 5.2: The IR-RTL language.  The  the operators (of the fictitious processor)
+capture  the  target  instruction  semantics  and  the  IR  constructs
+describe the control flow  and layout properties of target instruction
+sequence.</strong></p></div>
+
+   <p>An  intermediate  representation may  also  be  required to  propagate
+information  computed  in  various  passes.   Rather  than  using  any
+explicit constructs, GCC adds such  information as the operands of the
+IR-RTL objects – both, the  objects that express and the objects that
+describe.  In terms of the “processor emulation” analogy, the IR-RTL
+represents  the program  being  compiled in  terms  of the  “emulated
+processor”!
+
+</p><p><a name="GCC-Implementation-of-MD-RTL-and-IR-RTL"></a>
+<a name="GCC-Implementation-of-MD_002dRTL-and-IR_002dRTL"></a>
+
+</p><h4 class="subsection">5.2.3 GCC Implementation of MD-RTL and IR-RTL</h4>
+
+<p>Although  we  have  viewed  the  MD-RTL and  IR-RTL  as  two  distinct
+languages, GCC implements them as one whole RTL subsystem, as shown in
+<a href="#fig_002drtl_002dsubsets">fig-rtl-subsets</a>.    To  see   the  correspondence   between  the
+implementation and the two languages, we divide the RTL objects listed
+in <samp><span class="file">$GCCHOME/gcc/rtl.def</span></samp> into three  different kinds as shown in
+<a href="#fig_002drtl_002dsubsets">fig-rtl-subsets</a> and then described below:
+
+   </p><div class="float">
+<a name="fig_002drtl_002dsubsets"></a><div align="center"></div>
+<div class="block-image"><img src="gcc-conceptual-structure_files/md-rtl-and-ir-rtl-languages.png" alt="md-rtl-and-ir-rtl-languages.png"></div>
+
+   <p><strong class="float-caption">Figure 5.3: The MD-RTL  and IR-RTL  languages, and their  implementation in
+GCC using three  kinds of RTL objects.  The  MD constructs appear only
+in the MD-RTL  language.  The IR constructs appear  only in the IR-RTL
+language.   The  operators are  common  to  both  the languages.   The
+implementation   lists  <em>all</em>   the  RTL   objects   together  in
+<samp><span class="file">$GCCHOME/gcc/rtl.def</span></samp>  and   does  <em>not</em>  distinguish  them
+(except in some comments in the code).</strong></p></div>
+
+     <ol start="1" type="1">
+
+     <li>A set of RTL  objects called <em>operators</em> that by themselves
+are basic elementary  computation operations and are used  to form RTL
+expressions  (RTX,  for short)  that  express  the target  instruction
+semantics in  both – the MD-RTL  and the IR-RTL  – languages.  Table
+(<a href="#tab_002drtl_002dops">tab-rtl-ops</a>)  lists the  operators.  We  emphasize:  the target
+semantics  are captured  in the  RTXs and  RTXs are  constructed using
+operators.
+
+     <p>Note   that,   unlike   the   current<a rel="footnote" href="#fn-11" name="fnd-11"><sup>11</sup></a>    GCC
+documentation, by  “RTX” we mean only the  expressions created using
+operators to express target semantics.
+
+     </p></li><li>A set of RTL objects  that are used to describe the control flow
+layout of  a sequence of RTXs  that represent the  input program being
+compiled  during  <i>t<sub>run</sub></i>  .   We  refer to  these  as  <em>IR
+(Intermediate     Representation)    constructs</em>,     or    <em>Flow
+Representation constructs</em> and are listed in table (<a href="#tab_002dir_002drtl">tab-ir-rtl</a>). 
+Each RTX in the sequence is embedded in a suitable IR construct object
+that expresses  the nature  of the control  flow (sequence  or branch)
+that the RTX is a part of.
+
+     <p>Additionally, we  also include RTL  constructs that are used  for book
+keeping purposes during a compilation  operation as a part of this set
+of constructs.  Constructs like  <code>note</code> are useful to record some
+information  computed  in   a  pass  for  use  at   later  times,  for
+instance.<a rel="footnote" href="#fn-12" name="fnd-12"><sup>12</sup></a>
+
+     </p><p>We will  refer to IR-RTL  expressions as <em>IR-RTX</em>s.   The IR-RTXs
+contain the RTXs that  express the target instruction semantics.  Thus
+a program being compiled is represented  as a list of IR-RTXs with the
+RTX  within   each  IR-RTX  capturing   the  semantics  of   a  target
+instruction.
+
+     </p></li><li>A set of constructs that specify the semantic patterns of target
+instructions in terms of the operators.  We refer to these as <em>MD
+(Machine   Description)   constructs</em>   and   are  listed   in   table
+(<a href="#tab_002dmd_002drtl">tab-md-rtl</a>).   Each instruction  semantics  pattern, or  simply
+instruction pattern  (as the GCC documentation calls  it) is enveloped
+by a  suitable MD  construct object that  expresses the nature  of the
+specification.
+
+     <p>We will  refer to MD-RTL  expressions as <em>MD-RTX</em>s.   The MD-RTXs
+contain the RTXs that  express the target instruction semantics.  Thus
+a machine description of target instruction semantics is a sequence of
+MD-RTXs with the  RTX within each MD-RTX capturing  the semantics of a
+target instruction.
+        </p></li></ol>
+
+   <div class="float">
+<a name="tab_002drtl_002dops"></a>
+   <p><table summary=""> <tbody><tr align="left"><td valign="top" width="33%"> <code>abs</code>                     </td><td valign="top" width="33%">
+ <code>addr_diff_vec</code>       </td><td valign="top" width="33%">
+ <code>addressof</code>             <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>addr_vec</code>             </td><td valign="top" width="33%">
+ <code>and</code>                    </td><td valign="top" width="33%">
+ <code>ashift</code>               <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>ashiftrt</code>               </td><td valign="top" width="33%">
+ <code>asm_input</code>            </td><td valign="top" width="33%">
+ <code>asm_operands</code>         <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>call</code>                  </td><td valign="top" width="33%">
+ <code>call_placeholder</code>       </td><td valign="top" width="33%">
+ <code>cc0</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>clobber</code>                </td><td valign="top" width="33%">
+ <code>compare</code>               </td><td valign="top" width="33%">
+ <code>concat</code>                <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>cond</code>                   </td><td valign="top" width="33%">
+ <code>cond_exec</code>             </td><td valign="top" width="33%">
+ <code>const</code>                <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>constant_p_rtx</code>       </td><td valign="top" width="33%">
+ <code>const_double</code>         </td><td valign="top" width="33%">
+ <code>const_int</code>            <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>const_string</code>          </td><td valign="top" width="33%">
+ <code>const_vector</code>          </td><td valign="top" width="33%">
+ <code>div</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>eq</code>                      </td><td valign="top" width="33%">
+ <code>expr_list</code>            </td><td valign="top" width="33%">
+ <code>ffs</code>                   <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>fix</code>                    </td><td valign="top" width="33%">
+ <code>float</code>                  </td><td valign="top" width="33%">
+ <code>float_extend</code>        <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>float_truncate</code>         </td><td valign="top" width="33%">
+ <code>ge</code>                    </td><td valign="top" width="33%">
+ <code>geu</code>                   <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>gt</code>                     </td><td valign="top" width="33%">
+ <code>gtu</code>                    </td><td valign="top" width="33%">
+ <code>high</code>                 <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>if_then_else</code>          </td><td valign="top" width="33%">
+ <code>include</code>               </td><td valign="top" width="33%">
+ <code>insn_list</code>             <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>ior</code>                   </td><td valign="top" width="33%">
+ <code>label_ref</code>              </td><td valign="top" width="33%">
+ <code>le</code>                   <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>leu</code>                    </td><td valign="top" width="33%">
+ <code>lo_sum</code>                </td><td valign="top" width="33%">
+ <code>lshiftrt</code>              <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>lt</code>                    </td><td valign="top" width="33%">
+ <code>ltgt</code>                   </td><td valign="top" width="33%">
+ <code>ltu</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>mem</code>                    </td><td valign="top" width="33%">
+ <code>minus</code>                  </td><td valign="top" width="33%">
+ <code>mod</code>                   <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>mult</code>                  </td><td valign="top" width="33%">
+ <code>ne</code>                      </td><td valign="top" width="33%">
+ <code>neg</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>nil</code>                    </td><td valign="top" width="33%">
+ <code>not</code>                   </td><td valign="top" width="33%">
+ <code>ordered</code>               <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>parallel</code>               </td><td valign="top" width="33%">
+ <code>pc</code>                     </td><td valign="top" width="33%">
+ <code>phi</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>plus</code>                    </td><td valign="top" width="33%">
+ <code>post_dec</code>             </td><td valign="top" width="33%">
+ <code>post_inc</code>             <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>post_modify</code>          </td><td valign="top" width="33%">
+ <code>pre_dec</code>               </td><td valign="top" width="33%">
+ <code>prefetch</code>             <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>pre_inc</code>                </td><td valign="top" width="33%">
+ <code>pre_modify</code>           </td><td valign="top" width="33%">
+ <code>queued</code>                <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>range_info</code>            </td><td valign="top" width="33%">
+ <code>range_live</code>            </td><td valign="top" width="33%">
+ <code>range_reg</code>           <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>range_var</code>              </td><td valign="top" width="33%">
+ <code>reg</code>                   </td><td valign="top" width="33%">
+ <code>resx</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>return</code>                 </td><td valign="top" width="33%">
+ <code>rotate</code>                 </td><td valign="top" width="33%">
+ <code>rotatert</code>             <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>scratch</code>                </td><td valign="top" width="33%">
+ <code>set</code>                   </td><td valign="top" width="33%">
+ <code>sign_extend</code>          <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>sign_extract</code>          </td><td valign="top" width="33%">
+ <code>smax</code>                   </td><td valign="top" width="33%">
+ <code>smin</code>                 <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>sqrt</code>                    </td><td valign="top" width="33%">
+ <code>ss_minus</code>             </td><td valign="top" width="33%">
+ <code>ss_plus</code>              <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>ss_truncate</code>           </td><td valign="top" width="33%">
+ <code>strict_low_part</code>      </td><td valign="top" width="33%">
+ <code>subreg</code>               <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>symbol_ref</code>            </td><td valign="top" width="33%">
+ <code>trap_if</code>              </td><td valign="top" width="33%">
+ <code>truncate</code>              <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>udiv</code>                   </td><td valign="top" width="33%">
+ <code>umax</code>                   </td><td valign="top" width="33%">
+ <code>umin</code>                 <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>umod</code>                    </td><td valign="top" width="33%">
+ <code>uneq</code>                  </td><td valign="top" width="33%">
+ <code>unge</code>                  <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>ungt</code>                  </td><td valign="top" width="33%">
+ <code>unknown</code>                </td><td valign="top" width="33%">
+ <code>unle</code>                 <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>unlt</code>                    </td><td valign="top" width="33%">
+ <code>unordered</code>             </td><td valign="top" width="33%">
+ <code>unsigned_fix</code>         <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>unsigned_float</code>        </td><td valign="top" width="33%">
+ <code>unspec</code>                 </td><td valign="top" width="33%">
+ <code>unspec_volatile</code>     <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>use</code>                     </td><td valign="top" width="33%">
+ <code>us_minus</code>             </td><td valign="top" width="33%">
+ <code>us_plus</code>              <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>us_truncate</code>           </td><td valign="top" width="33%">
+ <code>value</code>                  </td><td valign="top" width="33%">
+ <code>vec_concat</code>          <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>vec_duplicate</code>          </td><td valign="top" width="33%">
+ <code>vec_merge</code>            </td><td valign="top" width="33%">
+ <code>vec_select</code>           <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>xor</code>                    </td><td valign="top" width="33%">
+ <code>zero_extend</code>           </td><td valign="top" width="33%">
+ <code>zero_extract</code>
+   <br></td></tr></tbody></table>
+</p><p><strong class="float-caption">Table 5.1: The operators in MD-RTL and IR-RTL.</strong></p></div>
+
+   <div class="float">
+<a name="tab_002dir_002drtl"></a>
+   <p><table summary=""><tbody><tr align="left"><td valign="top" width="33%"> <code>insn</code> </td><td valign="top" width="33%">
+ <code>call_insn</code> </td><td valign="top" width="33%">
+ <code>note</code> <br></td></tr><tr align="left"><td valign="top" width="33%"> <code>barrier</code> </td><td valign="top" width="33%">
+ <code>jump_insn</code> </td><td valign="top" width="33%">
+ <code>code_label</code>
+   <br></td></tr></tbody></table>
+</p><p><strong class="float-caption">Table 5.2: The IR RTLs.</strong></p></div>
+
+   <div class="float">
+<a name="tab_002dmd_002drtl"></a>
+   <p><table summary=""><tbody><tr align="left"><td valign="top" width="33%"><code>absence_set</code>   </td><td valign="top" width="33%">
+<code>address</code>   </td><td valign="top" width="33%">
+<code>attr</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>attr_flag</code>   </td><td valign="top" width="33%">
+<code>automata_option</code>   </td><td valign="top" width="33%">
+<code>define_asm_attributes</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_attr</code>   </td><td valign="top" width="33%">
+<code>define_automaton</code>   </td><td valign="top" width="33%">
+<code>define_bypass</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_combine</code>   </td><td valign="top" width="33%">
+<code>define_cond_exec</code>   </td><td valign="top" width="33%">
+<code>define_cpu_unit</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_delay</code>   </td><td valign="top" width="33%">
+<code>define_expand</code>   </td><td valign="top" width="33%">
+<code>define_function_unit</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_insn</code>   </td><td valign="top" width="33%">
+<code>define_insn_and_split</code>   </td><td valign="top" width="33%">
+<code>define_insn_reservation</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_peephole</code>   </td><td valign="top" width="33%">
+<code>define_peephole2</code>   </td><td valign="top" width="33%">
+<code>define_query_cpu_unit</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>define_reservation</code>   </td><td valign="top" width="33%">
+<code>define_split</code>   </td><td valign="top" width="33%">
+<code>eq_attr</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>exclusion_set</code>   </td><td valign="top" width="33%">
+<code>match_dup</code>   </td><td valign="top" width="33%">
+<code>match_insn</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>match_op_dup</code>   </td><td valign="top" width="33%">
+<code>match_operand</code>   </td><td valign="top" width="33%">
+<code>match_operator</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>match_parallel</code>   </td><td valign="top" width="33%">
+<code>match_par_dup</code>   </td><td valign="top" width="33%">
+<code>match_scratch</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>presence_set</code>   </td><td valign="top" width="33%">
+<code>sequence</code>   </td><td valign="top" width="33%">
+<code>set_attr</code>  <br></td></tr><tr align="left"><td valign="top" width="33%"><code>set_attr_alternative</code>   </td><td valign="top" width="33%"></td><td valign="top" width="33%">
+   <br></td></tr></tbody></table>
+</p><p><strong class="float-caption">Table 5.3: The MD RTLs.</strong></p></div>
+
+   <p>These  three sets  are distinct  and disjoint.   The operators  and MD
+constructs define the MD-RTL language  and are used to describe target
+instruction  semantics at  <i>t<sub>develop</sub></i>.  The  IR  constructs and
+operators define  the IR-RTL  language and are  used to  construct the
+intermediate  representation of  a compilation  run  at <i>t<sub>run</sub></i>. 
+The  current<a rel="footnote" href="#fn-13" name="fnd-13"><sup>13</sup></a>   GCC   documentation  does  not
+distinguish  between the  different languages,  nor the  different RTL
+objects and RTL expressions and heavily depends on the context for the
+distinction.
+
+</p><p><a name="How-the-RTL-Works"></a>
+
+</p><h3 class="section">5.3 How the RTL Works</h3>
+
+<p>In this  section we describe how  the MD-RTL and  the IR-RTL machinery
+described  above is employed  by GCC.   We use  the time  durations to
+fix the details with respect to <a href="#fig_002dcgf">Figure 3.2</a>.
+
+</p><p><a name="MD-RTL---Describing-Target-Machines"></a>
+<a name="MD_002dRTL-_002d-Describing-Target-Machines"></a>
+
+</p><h4 class="subsection">5.3.1 MD-RTL: Describing Target Machines (<i>t<sub>develop</sub></i>)</h4>
+
+<p>MD-RTL  as a  specification  system is  made  up of  operators and  MD
+constructs.   The operators are  used to  construct RTXs  that capture
+target instruction semantics and are called as <em>instruction
+  patterns</em>.  Two main issues arise at specification time:
+
+     </p><ol start="1" type="1">
+
+     <li>At <i>t<sub>develop</sub></i>, the goal is  to create target specific
+part of the  Gimple to IR-RTL translation table.  The  MD-RTL is to be
+used to capture and express the target semantics.
+
+     </li><li>During that  actual translation from Gimple to  IR-RTL at
+<i>t<sub>run</sub></i> not all information  about the target is available.  For
+instance,  the  target  register  to  be  used as  an  operand  to  an
+instruction.  However, it is possible to specify the <em>properties</em>
+required by the register object.  The MD-RTL should be able to express
+such run time scenarios.
+
+        </li></ol>
+
+   <p>The RTX within a MD-RTX  addresses the first issue by capturing target
+instruction semantics.  The other MD construct within a MD-RTX address
+the     second    issue     through    various     constructs    (e.g. 
+<code>match_operand</code>).   Additionally,  we may  need  to capture  some
+target properties that can provide useful information to the compiler. 
+For example, the pipeline characteristics  of the target, if any.  The
+specification system thus has three main goals.
+
+     </p><ol start="1" type="1">
+<li>To create  the target  specific part  of the  Gimple  to IR-RTL
+  translation  table.    This  is  useful  during   Gimple  to  IR-RTL
+  transformation.
+
+     </li><li>To provide  target specific information that can  be used by the
+  compiler  to improve  the code.   This results  in  transforming one
+  IR-RTL sequence to another, possibly a better one.
+
+     </li><li>To ensure that at the end of the compilation every IR-RTL object
+  maps to at least one target instruction.
+        </li></ol>
+
+   <p>The last goal is implicit in  the GCC (and gcc) system.  To facilitate
+the construction of the Gimple to IR-RTL table at <i>t<sub>build</sub></i>, GCC
+standardises  a few  pattern semantics  called Standard  Pattern Names
+(SPNs).   Target specifications  are expected  to  specify instruction
+patterns corresponding to the semantics of these pattern names.  It is
+possible that  for some  targets the semantics  of a pattern  name may
+correspond to a single instruction  while for others a sequence of RTL
+expressions may be  required.  It may also be  possible that a pattern
+may correspond  to different RTXs depending on  some target properties
+which are known only  at <i>t<sub>run</sub></i>.  In general, the specification
+system has to be designed with the possible scenarios that might occur
+at <i>t<sub>run</sub></i>.   For such  purposes the specification  system needs
+constructs to capture the  exact situation at <i>t<sub>run</sub></i> that might
+occur.  The simplest case is that the semantics of a SPN correspond to
+a single target instruction through a single RTX.  This is usually the
+case  and  the  MD  construct  called <code>define_insn</code>  is  used  to
+associate   a  SPN  to   the  RTX   that  implements   the  semantics. 
+Additionally,  it also  associates the  same RTX  that  implements the
+semantics to the corresponding  target instruction in assembly syntax. 
+In case  the semantics of an  SPN require different  RTXs depending on
+target  properties  that  are  known  at  runtime  (for  instance  the
+properties   of  the   register  operand),   then  the   MD  construct
+<code>define_expand</code> is used in the specification.
+
+   </p><p><strong>Example:</strong> As  an example  consider the SPN  <code>addsi3</code> that
+has the addition  semantics of three operands each  of size SI (single
+RTL integer).   For concreteness, we  assume a fictitious  target that
+has registers with the same width  as SI mode of RTL, and a <code>sum</code>
+instruction that adds the integers  in the first two register operands
+and deposits  the result in the  third register operand.   There is an
+implicit assignment  operation in the instruction.   The operator that
+expresses  addition is  <code>plus</code>, and  the operator  that expresses
+assignment is <code>set</code>.  Since this is a  situation in which
+the semantics are  implemented by a single target  instruction, we use
+the <code>define_insn</code> construct to specify a MD-RTX as:
+
+</p><pre class="example">     ;;-----------------------------------------------------------
+     ;; MD-RTX defining the addition operation on the target
+     (define_insn  ; MD construct, at least 4 arguments
+     ; 1. The name of the SPN
+        "addsi3"
+     ; 2. RTX capturing the semantics of the equivalent (to SPN)
+     ;    target instruction (the "sum" instruction)
+        ; RTL assignment operator
+        (set
+           ; Describe third operand, required to be a register
+           (match_operand 2 "register_operand" "r")
+           ; RTL addition operator
+           (plus
+              ; Describe first operand, required to be a register
+              (match_operand 0 "register_operand" "r")
+              ; Describe second operand, required to be a register
+              (match_operand 1 "register_operand" "r")
+           )
+        ) ; END of RTX implementing the semantics of SPN
+     ; 3. Unused third operand (in this case) of define_insn
+        ""
+     ; 4. The actual target instruction in target assembly syntax
+     ;    %1, %2, %3 are replaced by the actual target registers.
+        "sum  %1 %2 %3"
+     ; 5. Unspecified fifth operand that is optional anyway.
+     )
+     ;;-----------------------------------------------------------
+</pre>
+   <p>The  <code>define_insn</code> construct  in the  MD-RTX above  requires four
+operands and  may take  an optional fifth  operand (not  shown above). 
+The first  operand is  the name of  the SPN  – <code> addsi3</code>  in the
+above  example.  The  second operand  is  an RTX  that implements  the
+specification of  the SPN in a  target specific manner.   In the above
+case,  the  RTX ensured  that  all  the  three operands  are  register
+operands   by  describing  the   operand  characteristics   using  the
+<code>match_operand</code> MD  construct.  This  need was particular  to the
+target.  Some other targets could also work with some operands in core
+memory rather than  registers, and in which case  the operand matching
+specifications would  be accordingly written.  This is  what makes the
+RTXs target  specific; they capture  the target semantics.   The third
+operand is irrelevant at the moment.  The fourth operand is the string
+that expresses the same  semantics in target specific assembly syntax. 
+In particular,  the addition operation that  is semantically identical
+to  <code>addsi3</code> is written  out with  the actual  hardware registers
+expressed  as parameters.  The  values of  these parameters,  i.e. the
+actual registers, will be  filled in with pseudoregisters that satisfy
+the properties expressed  by the <code>register_operand</code> expression in
+the <code>match_operand</code> construct.
+
+   </p><p>Note  that  the RTX  within  the  MD-RTX  has been  constructed  using
+operators and  has been embedded  within a suitable  specification RTL
+construct using  the MD constructs.  We  also observe that  the SPN is
+coarse  enough  to  correspond  to  some fine  detail  of  the  Gimple
+representation,  and   it  can  be  fine  tuned   to  target  specific
+expressions with a little effort.  Also, the specification is in human
+readable Lisp like syntax.  This is converted to C code at build time. 
+Finally, the  syntactic and operational  details of each  MD construct
+can    be    found    on    the   online    GCC    internals    manual
+<a href="#GCC-Internals-_0028by-Richard-Stallman_0029">GCC Internals (by Richard Stallman)</a>.
+
+</p><p><a name="From-MD-RTL-to-IR-RTL"></a>
+<a name="From-MD_002dRTL-to-IR_002dRTL"></a>
+
+</p><h4 class="subsection">5.3.2 From MD-RTL to IR-RTL (<i>t<sub>build</sub></i>)</h4>
+
+<p>At <i>t<sub>build</sub></i>,  the machine description  is chosen, the  RTXs are
+extracted from the MD and processed as described in section <a href="#Build-time-Gimple-to-IR_002dRTL-conversion-issues">Build time Gimple to IR-RTL conversion issues</a>.  Extraction  of  the RTXs
+implies  converting each  object in  the  MD-RTL form  to an  internal
+representation     using     the      RTL     structure     in     the
+<samp><span class="file">$GCCHOME/gcc/rtl.h</span></samp> file.   The RTL structure  is (some comments
+from the original source have been removed):
+
+</p><pre class="verbatim">/* Common union for an element of an rtx.  */
+union rtunion_def
+{
+  int                        rt_int;
+  unsigned int               rt_uint;
+  const char                *rt_str;
+  rtx                        rt_rtx;
+  rtvec                      rt_rtvec;
+  enum machine_mode          rt_type;
+  addr_diff_vec_flags        rt_addr_diff_vec_flags;
+  struct cselib_val_struct  *rt_cselib;
+  struct bitmap_head_def    *rt_bit;
+  tree                       rt_tree;
+  struct basic_block_def    *rt_bb;
+  mem_attrs                 *rt_mem;
+  reg_attrs                 *rt_reg;
+};
+typedef union rtunion_def rtunion;
+
+/* RTL expression ("rtx").  */
+struct rtx_def
+{
+  /* The kind of expression this is.  */
+  ENUM_BITFIELD(rtx_code) code: 16;
+
+  /* The kind of value the expression has.  */
+  ENUM_BITFIELD(machine_mode) mode : 8;
+
+  unsigned int jump           : 1;
+  unsigned int call           : 1;
+  unsigned int unchanging     : 1;
+  unsigned int volatil        : 1;
+  unsigned int in_struct      : 1;
+  unsigned int used           : 1;
+  unsigned     frame_related  : 1;
+  unsigned     return_val     : 1;
+  union u {
+    rtunion        fld[1];
+    HOST_WIDE_INT  hwint[1];
+  };
+};
+</pre>
+
+   <p>Each  RTL  object,  particulary   the  operators  and  IR  constructs,
+internally  corresponds  to  an   instance  of  this  structure.   The
+operation is  identified using  the <code>code</code> field  whose numerical
+value in the code field is  obtained by simply enumerating all the RTL
+objects  defined in  <samp><span class="file">$GCCHOME/gcc/rtl.def</span></samp>.  Most  other details
+are in the  union defined by <code>rtunion</code>.  The  Lisp like syntax of
+MD-RTL makes this an  easy internal representation with the expression
+syntax  defining the structure  of the  internal lists-of-RTL-objects. 
+To <em>use</em> the RTX in  the specification to represent a computation
+in  a compilation  of input  program at  <i>t<sub>run</sub></i>, the  GCC build
+process <em>generates</em> (i.e.  emits) C code that:
+
+     </p><ol start="1" type="1">
+<li><a name="step1"></a>Task  1:  Identify the  particular operator  code
+  required.
+
+     </li><li><a name="step2"></a>Task 2: Generate  a C function to emit an instance
+  of the RTL structure <code>rtx_def</code> structure with that code.
+
+     </li><li><a name="step3"></a>Task 3: Generate  a C function that will chain the
+  instantiated RTL object into the RTL based IR of the input program.
+        </li></ol>
+
+   <p><strong>Example:</strong> The <code>addsi3</code> example specification (from the
+example above)
+
+</p><pre class="example">     ;;-----------------------------------------------------------
+     (define_insn "addsi3"
+        (set (match_operand 2 "register_operand" "r")
+             (plus  (match_operand 0 "register_operand" "r")
+                    (match_operand 1 "register_operand" "r")))
+        ""
+        "sum  %1 %2 %3"
+     )
+     ;;-----------------------------------------------------------
+</pre>
+   <p class="noindent">is  converted  to the  equivalent  C  code  below at  generation  time
+<i>t<sub>gen</sub></i> during <i>t<sub>build</sub></i>:
+
+</p><pre class="example">     /*----------------------------------------------------*/
+     rtx
+     gen_addsi3 (rtx operand0, rtx operand1, rtx operand2)
+     {
+        ...
+        emit_insn (gen_rtx_set (SImode, op0, op1, op2));
+        ...
+     }
+     /*----------------------------------------------------*/
+</pre>
+   <p>The generated  C functions start  with “<code>gen_</code>” prefix  and the
+name of the pattern (“<code>addsi3</code>” in this example) as the suffix. 
+The specified RTX starts  with the <code>set</code> operation.  The operands
+of the  <code>set</code> are themselves  other RTXs (e.g.   <code>plus</code>) and
+may be initialised by their equivalent C code (not shown) before being
+passed  to   the  <code>gen_rtx_set()</code>  function   shown  above.   The
+<code>gen_rtx_set  ()</code>  function (task  <a href="#step2">step2</a>)  is  the code  to
+create an  instance of  the RTL structure  above with  the <code>code</code>
+field initialised to the (enumerated) value of the <code>SET</code> operator
+(task <a href="#step1">step1</a>).
+
+   </p><p>Since the internal representation of  the RTL object would actually be
+a part of  a (doubly linked) list while  representing an input program
+at  <i>t<sub>run</sub></i>,   the  <code>gen_addsi3  ()</code>   function  calls  the
+<code>emit_insn()</code> function  to chain the  output of <code>gen_rtx_set
+()</code> into the chain (task <a href="#step3">step3</a>).
+
+   </p><p>All of these steps are bundled into (usually) a single C function that
+conceptually now “emits” the entire IR-RTX corresponding to the SPN. 
+This function<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a> is stored
+in the <code>insn_data []</code>  array in <a href="#fig_002djoin_002dtab">Figure 4.4</a>.  The index at
+which  this function  is stored  in <code>insn_data  []</code> is  stored in
+<code>optab</code>  array at  the offset  indexed  using the  SPN.  All  the
+specified  RTXs  in the  machine  description  are  thus processed  at
+<i>t<sub>build</sub></i>  and  collected  into  the  C  data  structure  called
+<code>insn_data</code>.   The  “SPN”   corresponding  to  a  given  Gimple
+construct is known  at <i>t<sub>develop</sub></i> and can be  used to index the
+<code>optab</code>   structure.    This   returns   the   index   into   the
+<code>insn_data</code> structure  to yield  the function pointer  that would
+instantiate the  RTX pattern specified  in the MD.  Note  that because
+the MD-RTXs  captured target  semantics (in it's  RTX), the  RTXs that
+represent  the compilation of  a program  are also,  therefore, target
+specific.
+
+   </p><p>At  the  end  of  <i>t<sub>gen</sub></i>  all  the  required  C  functions  are
+generated.   During  <i>t<sub>comp</sub></i> they  will  be  compiled into  the
+object code which  when executed at <i>t<sub>run</sub></i> would  emit a IR-RTX
+as a list of objects of the RTL data structure at <i>t<sub>run</sub></i>.
+
+   </p><p>This completes the  task of generating the target  specific code.  The
+complete target  specific Gimple to  IR-RTL translation table  is thus
+implemented   through  a  target   independent  data   structure  that
+corresponds to  the Gimple part  and a target specific  data structure
+that corresponds to  the IR-RTL part.  Both these  are connected using
+the pattern names.
+
+</p><p><a name="IR-RTL---Representating-a-Compilation"></a>
+<a name="IR_002dRTL-_002d-Representating-a-Compilation"></a>
+
+</p><h4 class="subsection">5.3.3 IR-RTL: Representating a Compilation (<i>t<sub>run</sub></i>)</h4>
+
+<p>The  IR-RTL representation  of  the input  program  being compiled  is
+generated by a  depth first traversal of the  Gimple representation at
+<i>t<sub>run</sub></i>.  During this process the data abstractions are lowered. 
+The program  is linear  list of IR-RTXs.   Each IR-RTX is  is obtained
+from the IR-RTX emitting function in <code>insn_data[]</code>.  The operands
+are typically pseudoregisters, but may also be the home locations, and
+are already available  when the IR-RTX emitting function  runs (due to
+the depth first traversal).  The operands hopefully satisfy the target
+specific matching  criteria given in the specification  in the machine
+description (e.g.   <code>match_operand</code> says that  the operand should
+be a “<code>register_operand</code>”).   The operand matching criteria are
+not  checked at  this  stage.  Thus  the  RTX in  the  IR-RTX has  the
+instantiated operands rather  than their specifications.  For example,
+the instantiated  RTX corresponding to  the <code>define_insn</code> example
+above would look like:
+
+</p><pre class="example">     ;;-----------------------------------------------------------
+     (set
+        ; Selected destination (pseudo) register
+        (reg 20)
+        ; Selected source (pseudo) registers
+        (plus (reg 29) (reg 8))
+     )
+     ;;-----------------------------------------------------------
+</pre>
+   <p>This  chain of  IR-RTXs  is  expressed using  the  IR constructs  like
+<code>insn</code>, <code>jump_insn</code> etc. to envelope the instantiated RTX as
+required.  The  actual operations like data  movement, arithmetic etc. 
+are   expressed   using   the  corresponding   operators   <code>mov</code>,
+<code>plus</code> etc.   within the RTX.  Thus the  IR-RTL representation of
+an input  program being  compiled is made  up of  chaining information
+expressed using IR RTXs.  The <code>insn</code> construct is used to express
+linear chaining, while the <code>jump_insn</code> is used to denote that the
+containing  RTX is  a branch  operation  to some  other location  thus
+disrupting  the linear  control flow  chain.   It is  because of  such
+constructs that  we suggest referring to IR  constructs as “(control)
+flow RTLs”.
+
+   </p><p><strong>Example:</strong> As  an example,  the enveloping of  the instantiated
+RTX above by <code> insn</code> construct would look like:
+
+</p><pre class="example">     ;;--------------------------------------------------------
+     (insn
+        ; the current node number in the linear chain
+        101
+        ; the previous node number in the linear chain
+        100
+        ; the next node number in the linear chain
+        102
+        ; the current RTX
+        (set
+           ; Selected destination (pseudo) register
+           (reg 20)
+           ; Selected source (pseudo) registers
+           (plus (reg 29) (reg 8))
+        )
+        ...
+     )
+     ;;--------------------------------------------------------
+</pre>
+   <p>Expression  texts of  the above  type  are dumped  by <code>gcc</code>  when
+requested (See: <a href="#GCC-_002d_002d-An-Introduction">GCC – An Introduction</a>) to dump the IR-RTL IR at
+various  stages of a  compilation run.   The IR-RTL  representation is
+obtained from the Gimple representation by translating the operational
+semantics  of the  Gimple nodes  using the  corresponding  IR-RTXs (as
+determined by the  <code>optab</code> and <code>insn_data</code> data structures). 
+However, not  all operand information  is available at this  point and
+the  initial   conversion  to  IR-RTL  remains   incomplete.   As  the
+processing  in  RTL  phase  of  the compiler  proceeds,  the  required
+information is obtained (e.g.  the register allocator fixes the actual
+hardware  registers to  be used  in  place of  the pseudo  registers). 
+Instruction selection in GCC is partial and is completed over a set of
+phases.
+
+</p><p><a name="Summary"></a>
+
+</p><h2 class="chapter">6 Summary</h2>
+
+<p>In summary, we  look at the essentials of the  GCC architecture in the
+sequence of  the three  time durations of  section <a href="#The-Impact-of-Retargetability">The Impact of Retargetability</a> that are a consequence of retargetability.  We ignore
+the  AST/Generic  generation  and  target  assembly  generation.   The
+AST/Generic  is  the output  of  the  parsing  process which  is  well
+understood  and hence  need not  be addressed  to in  an architectural
+description.  The  assembly code  generation is simplified  because at
+the  end of  the RTL  passes,  the IR-RTL  representation is  complete
+enough to merely require expression in target assembly syntax.  Hence,
+we look  at Gimple and  RTL at <i>t<sub>develop</sub></i>,  <i>t<sub>build</sub></i> and
+<i>t<sub>run</sub></i> times.
+
+     </p><ol start="1" type="1">
+<li><i>t<sub>develop</sub></i>
+
+          <ol start="1" type="1">
+  <li>Gimple
+               <ol start="1" type="1">
+    <li>Separate target independent and target specific part of the
+      Gimple –&gt; IR-RTL translation,
+
+               </li><li>Prepare to join the separated parts by
+                    <ol start="1" type="1">
+      <li>defining SPNs, and
+
+                    </li><li>writing the generator code for use at <i>t<sub>build</sub></i>
+
+                    </li></ol>
+               </li></ol>
+
+          </li><li>RTL
+               <ol start="1" type="1">
+    <li>Use  MD construct  and operators  to construct  MD-RTXs that
+      <em>specify</em> the  semantics of the target  instructions in the
+      corresponding machine description,
+
+               </li><li>define  the RTL  data structure  in C that  will be  used to
+      represent the RTXs in internal form
+               </li></ol>
+          </li></ol>
+
+     </li><li><i>t<sub>build</sub></i>
+
+          <ol start="1" type="1">
+  <li>Gimple
+               <ol start="1" type="1">
+    <li>Run the generator programs on the chosen MD to list out the
+      pattern names of each defined pattern, and
+
+               </li><li>use the indices obtained  to fill the <code> optab</code> table with
+      the offset  of the corresponding pattern expression  in the <code>
+        insn_data</code> table.
+               </li></ol>
+
+          </li><li>RTL
+               <ol start="1" type="1">
+    <li>Run the generator programs on  the chosen MD to list out the
+      patterns in MD-RTL,  and convert them to C  functions that would
+      emit the IR-RTL form, and
+
+               </li><li>fill in the <code> insn_data</code> array with the function pointer
+      to the generated C function.
+               </li></ol>
+          </li></ol>
+
+     </li><li><i>t<sub>run</sub></i>
+
+          <ol start="1" type="1">
+  <li>Gimple: Index into the <code> optab</code> array to obtain the offset
+    to be used into the <code>insn_data</code> array.
+
+          </li><li>RTL:  Use the index obtained  from the <code>  optab</code> arrat into
+    the target specific <code>insn_data</code> array and obtain the function
+    pointer  that   points  to  the  function  to   emit  the  IR-RTL
+    representation.
+          </li></ol>
+        </li></ol>
+
+   <p>Note that because the same Lisp like syntax of RTXs<a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a>    is  used  during  target  specific
+compiler  build   and  a   later  run  of   the  built   compiler,  no
+interconversion  (between  the   specification  and  runtime  internal
+representation) is required.  The MD constructs used for specification
+purposes, and the IR  constructs, used for representation purposes are
+well  separated.  This  particular feature  of the  RTL system  is not
+clearly brought  out by the current  GCC documentation.<a rel="footnote" href="#fn-16" name="fnd-16"><sup>16</sup></a>
+
+</p><p><a name="Conclusion-and-Future-Work"></a>
+
+</p><h2 class="chapter">7 Conclusion and Future Work</h2>
+
+<p>Amongst the many  concepts that have gone in  into the construction of
+the GCC system,  three main ones are useful  to understand the overall
+picture.   Firstly, the  abstraction gap  is useful  in  obtaining the
+phase sequence  of lowering-one-gap-at-a-time operations.   Second, we
+identify   three  time   points   <i>t<sub>develop</sub></i>,  <i>t<sub>build</sub></i>,
+<i>t<sub>run</sub></i>  (and  <i>t<sub>gen</sub></i> and  <i>t<sub>comp</sub></i>  as  a part  of
+<i>t<sub>run</sub></i>) that  serve to  delimit the three  different conceptual
+views:
+
+     </p><ol start="1" type="1">
+<li>the architecture of the Compiler Generation Framework,
+
+     </li><li>the architecture of  target  specific  Compiler  operation phase
+  sequence, and
+
+     </li><li>the architecture of the build system.
+        </li></ol>
+
+   <p>These  three  views are  useful  to  understand GCC.   Retargetability
+implies postponing target specific decisions to build time rather than
+at  design  time.  Hence  at  design  time,  the source  is  expressed
+“parameterically” with  respect to target properties  and the target
+properties are separately  specified on a per target  basis.  At build
+time, the target specific parts of the compiler are generated from the
+specifications  of  the chosen  target.   The  complete compiler  then
+operates on  an input program lowering  one abstraction gap  at a time
+for each IR.  Thirdly, it is  useful to see the implemented RTL system
+as emerging from  the two languages: MD-RTL and  IR-RTL.  The first is
+used for specification purposes at <i>t<sub>develop</sub></i> and the second is
+used  to represent a  program being  compiled at  <i>t<sub>run</sub></i>.  They
+share the same operators.  Hence  the common implementation of all RTL
+objects  in <samp><span class="file">$GCCHOME/gcc/rtl.def</span></samp>  can  be seen  as composed  of
+three distinct kinds of objects:  the MD constructs, the operators and
+the IR  constructs.  The  MD constructs and  the operators  define the
+MD-RTL  language.  The  IR  constructs and  the  operators define  the
+IR-RTL language.  The operators  connect the target specific semantics
+expressed at development time  to the representations at the operation
+time.  This connection is explicitly made at build time when the build
+system operates.
+
+</p><p><a name="Future-Work"></a>
+
+</p><h3 class="section">7.1 Future Work</h3>
+
+<p>The identification  of three views  that describe GCC at  various time
+durations  can be  employed for  directing future  work.  A  number of
+possibilities exist, and we list a few interesting ones.
+
+     </p><ul>
+<li>Compilation theory:
+
+          <ul>
+  <li>Quantifying  the abstraction gap and  determination of factors
+    that determine the phase sequence.
+
+          </li><li>Formalising  the IRs as  abstract machines and  studying their
+    properties.
+
+          </li><li>Formally modeling compilation phases.
+
+          </li><li>Study the notion of retargetability. 
+  </li></ul>
+
+     </li><li>Future GCC directions:
+
+          <ul>
+  <li>Implementation  changes to push choice of  target at operation
+    time rather than build time.
+
+          </li><li>Changes in the phase sequence to implement new challenges like
+    auto parallelisation.
+
+          </li><li>Changes  in  the  implementation  to  do  better  instruction
+    selection. 
+  </li></ul>
+     </li></ul>
+
+<!--  -->
+<p><a name="References"></a>
+
+</p><h2 class="unnumbered">References</h2>
+
+<!-- Set or Clear the flag  ``usehomeurl'' for EACH item depending on whether -->
+<!-- the macro ``dourlrefitem'' should use the GCCINTDOCSHOME shorthand.  All -->
+<!-- references to our docs use the GCCINTDOCSHOME shorthand.  All references -->
+<!-- to outside links are absolute and do _not_ use the shorthand. -->
+     <ol start="1" type="1">
+
+     <li><a name="GCC-Internals-_0028by-Richard-Stallman_0029"></a>Richard. M. Stallman. <br>
+<a href="http://gcc.gnu.org/onlinedocs/gccint"><strong>GCC Internals.</strong></a> <br>
+2007.
+
+     </li><li><a name="Porting-GCC-for-Dunces-_0028by-Hans_002dPeter-Nilsson_0029"></a>Hans-Peter Nilsson. <br>
+<a href="ftp://ftp.axis.se/pub/users/hp/pgccfd/"><strong>Porting GCC for Dunces.</strong></a> <br>
+May 2000.
+
+     </li><li><a name="GCC-Internals-_0028by-Deigo-Novillo_0029"></a>Deigo Novillo.<br>
+<strong>GCC Internals.</strong>,<br>
+<em>In International Symposium on Code Generation and
+Optimization (CGO), San Jose, California,</em> <br>
+2007.
+
+     </li><li><a name="GCC-_002d_002d-Yesterday-Today-and-Tomorrow-_0028by-Deigo-Novillo_0029"></a>Deigo Novillo.<br>
+<strong>GCC – Yesterday, Today and Tomorrow.</strong><br>
+In <em>2<sup>nd</sup> HiPEAC GCC Tutorial</em>, Ghent,
+Belgium,,<br>
+2007.
+
+     </li><li><a name="GCC-Wiki-Book"></a>– <br>
+<a href="http://en.wikibooks.org/wiki/GNU_C_Compiler_Internals"><strong>GCC Wiki Book.</strong></a> <br>
+2007.
+
+     </li><li><a name="GCC-_002d_002d-An-Introduction"></a>Abhijat Vichare. <br>
+<a href="http://www.cse.iitb.ac.in/grc/gcc-int-docs/gcc-int-docs/html/gcc-basic-info.html"><strong>GCC – An Introduction.</strong></a> <br>
+2007.
+
+     </li></ol>
+
+<p><a name="List-of-Figures"></a>
+
+</p><h2 class="unnumbered">List of Figures</h2>
+
+<ul class="listoffloats">
+   <li><a href="#fig_002dtime_002dline">Figure 3.1: Important time durations  in GCC</a></li>
+  <li><a href="#fig_002dcgf">Figure 3.2: The  GCC   Compiler  Generation  Framework   (CGF).</a></li>
+  <li><a href="#fig_002dgcc_002dphase_002dsequence">Figure 3.3: The  GCC phases.</a></li>
+  <li><a href="#fig_002dgimple_002dto_002drtl_002dproblem">Figure 4.1: The  Gimple –&gt; IR-RTL  translation problem</a></li>
+  <li><a href="#fig_002dgimple_002dto_002drtl_002dsoln">Figure 4.2: GCC solution of The Gimple –&gt; IR-RTL translation problem</a></li>
+  <li><a href="#fig_002dsep_002dtab">Figure 4.3: Separating the Gimple to IR-RTL translation finite function.</a></li>
+  <li><a href="#fig_002djoin_002dtab">Figure 4.4: Joining the Gimple to IR-RTL translation finite function.</a></li>
+  <li><a href="#fig_002dmd_002drtl_002dlanguage">Figure 5.1: The MD-RTL language</a></li>
+  <li><a href="#fig_002dir_002drtl_002dlanguage">Figure 5.2: The IR-RTL language</a></li>
+  <li><a href="#fig_002drtl_002dsubsets">Figure 5.3: The MD-RTL and IR-RTL languages</a></li>
+</ul>
+
+<p><a name="List-of-Tables"></a>
+
+</p><h2 class="unnumbered">List of Tables</h2>
+
+<ul class="listoffloats">
+  <li><a href="#tab_002dc_002dgimple_002dnodes">Table 4.1: The Gimple nodes.</a></li>
+  <li><a href="#tab_002drtl_002dops">Table 5.1: The operators in MD-RTL and IR-RTL.</a></li>
+  <li><a href="#tab_002dir_002drtl">Table 5.2: The IR RTLs.</a></li>
+  <li><a href="#tab_002dmd_002drtl">Table 5.3: The MD RTLs.</a></li>
+</ul>
+
+<p><a name="Copyright"></a>
+
+</p><h2 class="appendix">Appendix A Copyright</h2>
+
+<p>This is edition  1.0 of “The Conceptual Structure of GCC”, last updated
+on January 7, 2008. 
+<!-- , and is based on GCC version @value{gccversion}. -->
+
+   </p><p>Copyright © 2004-2008 Abhijat Vichare
+, I.I.T. Bombay.
+
+   </p><blockquote>
+Permission is granted to
+<!-- @ifhtml -->
+<!-- @uref{@value{homeurl}/gcc-int-docs-v1.0.tgz, -->
+copy, distribute and/or modify this document<!-- } -->
+<!-- @end ifhtml -->
+<!-- @ifnothtml -->
+<!-- copy, distribute and/or modify this document -->
+<!-- @end ifnothtml -->
+under the terms of the  GNU Free Documentation License, Version 1.2 or
+any later version  published by the Free Software  Foundation; with no
+Invariant    Sections,    with    the    Front-Cover    Texts    being
+“The Conceptual Structure of GCC,” and  with the Back-Cover Texts as  in (a) below. 
+A copy of  the license is included in the  section entitled “GNU Free
+Documentation License.”
+
+        <p>(a)  The FSF's  Back-Cover Text  is: “You  have freedom  to  copy and
+modify this  GNU Manual, like  GNU software.  Copies published  by the
+Free Software Foundation raise funds for GNU development.”
+</p></blockquote>
+
+<p><a name="GNU-Free-Documentation-License"></a>
+
+</p><h3 class="section">A.1 GNU Free Documentation License</h3>
+
+<!-- The GNU Free Documentation License. -->
+<div align="center">Version 1.2, November 2002</div>
+
+<!-- This file is intended to be included within another document, -->
+<!-- hence no sectioning command or @node. -->
+<pre class="display">     Copyright © 2000,2001,2002 Free Software Foundation, Inc.
+     51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA
+     
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+</pre>
+     <ol start="0" type="1">
+<li>PREAMBLE
+
+     <p>The purpose of this License is to make a manual, textbook, or other
+functional and useful document <dfn>free</dfn> in the sense of freedom: to
+assure everyone the effective freedom to copy and redistribute it,
+with or without modifying it, either commercially or noncommercially. 
+Secondarily, this License preserves for the author and publisher a way
+to get credit for their work, while not being considered responsible
+for modifications made by others.
+
+     </p><p>This License is a kind of “copyleft”, which means that derivative
+works of the document must themselves be free in the same sense.  It
+complements the GNU General Public License, which is a copyleft
+license designed for free software.
+
+     </p><p>We have designed this License in order to use it for manuals for free
+software, because free software needs free documentation: a free
+program should come with manuals providing the same freedoms that the
+software does.  But this License is not limited to software manuals;
+it can be used for any textual work, regardless of subject matter or
+whether it is published as a printed book.  We recommend this License
+principally for works whose purpose is instruction or reference.
+
+     </p></li><li>APPLICABILITY AND DEFINITIONS
+
+     <p>This License applies to any manual or other work, in any medium, that
+contains a notice placed by the copyright holder saying it can be
+distributed under the terms of this License.  Such a notice grants a
+world-wide, royalty-free license, unlimited in duration, to use that
+work under the conditions stated herein.  The “Document”, below,
+refers to any such manual or work.  Any member of the public is a
+licensee, and is addressed as “you”.  You accept the license if you
+copy, modify or distribute the work in a way requiring permission
+under copyright law.
+
+     </p><p>A “Modified Version” of the Document means any work containing the
+Document or a portion of it, either copied verbatim, or with
+modifications and/or translated into another language.
+
+     </p><p>A “Secondary Section” is a named appendix or a front-matter section
+of the Document that deals exclusively with the relationship of the
+publishers or authors of the Document to the Document's overall
+subject (or to related matters) and contains nothing that could fall
+directly within that overall subject.  (Thus, if the Document is in
+part a textbook of mathematics, a Secondary Section may not explain
+any mathematics.)  The relationship could be a matter of historical
+connection with the subject or with related matters, or of legal,
+commercial, philosophical, ethical or political position regarding
+them.
+
+     </p><p>The “Invariant Sections” are certain Secondary Sections whose titles
+are designated, as being those of Invariant Sections, in the notice
+that says that the Document is released under this License.  If a
+section does not fit the above definition of Secondary then it is not
+allowed to be designated as Invariant.  The Document may contain zero
+Invariant Sections.  If the Document does not identify any Invariant
+Sections then there are none.
+
+     </p><p>The “Cover Texts” are certain short passages of text that are listed,
+as Front-Cover Texts or Back-Cover Texts, in the notice that says that
+the Document is released under this License.  A Front-Cover Text may
+be at most 5 words, and a Back-Cover Text may be at most 25 words.
+
+     </p><p>A “Transparent” copy of the Document means a machine-readable copy,
+represented in a format whose specification is available to the
+general public, that is suitable for revising the document
+straightforwardly with generic text editors or (for images composed of
+pixels) generic paint programs or (for drawings) some widely available
+drawing editor, and that is suitable for input to text formatters or
+for automatic translation to a variety of formats suitable for input
+to text formatters.  A copy made in an otherwise Transparent file
+format whose markup, or absence of markup, has been arranged to thwart
+or discourage subsequent modification by readers is not Transparent. 
+An image format is not Transparent if used for any substantial amount
+of text.  A copy that is not “Transparent” is called “Opaque”.
+
+     </p><p>Examples of suitable formats for Transparent copies include plain
+<span class="sc">ascii</span> without markup, Texinfo input format, LaTeX input
+format, <acronym>SGML</acronym> or <acronym>XML</acronym> using a publicly available
+<acronym>DTD</acronym>, and standard-conforming simple <acronym>HTML</acronym>,
+PostScript or <acronym>PDF</acronym> designed for human modification.  Examples
+of transparent image formats include <acronym>PNG</acronym>, <acronym>XCF</acronym> and
+<acronym>JPG</acronym>.  Opaque formats include proprietary formats that can be
+read and edited only by proprietary word processors, <acronym>SGML</acronym> or
+<acronym>XML</acronym> for which the <acronym>DTD</acronym> and/or processing tools are
+not generally available, and the machine-generated <acronym>HTML</acronym>,
+PostScript or <acronym>PDF</acronym> produced by some word processors for
+output purposes only.
+
+     </p><p>The “Title Page” means, for a printed book, the title page itself,
+plus such following pages as are needed to hold, legibly, the material
+this License requires to appear in the title page.  For works in
+formats which do not have any title page as such, “Title Page” means
+the text near the most prominent appearance of the work's title,
+preceding the beginning of the body of the text.
+
+     </p><p>A section “Entitled XYZ” means a named subunit of the Document whose
+title either is precisely XYZ or contains XYZ in parentheses following
+text that translates XYZ in another language.  (Here XYZ stands for a
+specific section name mentioned below, such as “Acknowledgements”,
+“Dedications”, “Endorsements”, or “History”.)  To “Preserve the Title”
+of such a section when you modify the Document means that it remains a
+section “Entitled XYZ” according to this definition.
+
+     </p><p>The Document may include Warranty Disclaimers next to the notice which
+states that this License applies to the Document.  These Warranty
+Disclaimers are considered to be included by reference in this
+License, but only as regards disclaiming warranties: any other
+implication that these Warranty Disclaimers may have is void and has
+no effect on the meaning of this License.
+
+     </p></li><li>VERBATIM COPYING
+
+     <p>You may copy and distribute the Document in any medium, either
+commercially or noncommercially, provided that this License, the
+copyright notices, and the license notice saying this License applies
+to the Document are reproduced in all copies, and that you add no other
+conditions whatsoever to those of this License.  You may not use
+technical measures to obstruct or control the reading or further
+copying of the copies you make or distribute.  However, you may accept
+compensation in exchange for copies.  If you distribute a large enough
+number of copies you must also follow the conditions in section 3.
+
+     </p><p>You may also lend copies, under the same conditions stated above, and
+you may publicly display copies.
+
+     </p></li><li>COPYING IN QUANTITY
+
+     <p>If you publish printed copies (or copies in media that commonly have
+printed covers) of the Document, numbering more than 100, and the
+Document's license notice requires Cover Texts, you must enclose the
+copies in covers that carry, clearly and legibly, all these Cover
+Texts: Front-Cover Texts on the front cover, and Back-Cover Texts on
+the back cover.  Both covers must also clearly and legibly identify
+you as the publisher of these copies.  The front cover must present
+the full title with all words of the title equally prominent and
+visible.  You may add other material on the covers in addition. 
+Copying with changes limited to the covers, as long as they preserve
+the title of the Document and satisfy these conditions, can be treated
+as verbatim copying in other respects.
+
+     </p><p>If the required texts for either cover are too voluminous to fit
+legibly, you should put the first ones listed (as many as fit
+reasonably) on the actual cover, and continue the rest onto adjacent
+pages.
+
+     </p><p>If you publish or distribute Opaque copies of the Document numbering
+more than 100, you must either include a machine-readable Transparent
+copy along with each Opaque copy, or state in or with each Opaque copy
+a computer-network location from which the general network-using
+public has access to download using public-standard network protocols
+a complete Transparent copy of the Document, free of added material. 
+If you use the latter option, you must take reasonably prudent steps,
+when you begin distribution of Opaque copies in quantity, to ensure
+that this Transparent copy will remain thus accessible at the stated
+location until at least one year after the last time you distribute an
+Opaque copy (directly or through your agents or retailers) of that
+edition to the public.
+
+     </p><p>It is requested, but not required, that you contact the authors of the
+Document well before redistributing any large number of copies, to give
+them a chance to provide you with an updated version of the Document.
+
+     </p></li><li>MODIFICATIONS
+
+     <p>You may copy and distribute a Modified Version of the Document under
+the conditions of sections 2 and 3 above, provided that you release
+the Modified Version under precisely this License, with the Modified
+Version filling the role of the Document, thus licensing distribution
+and modification of the Modified Version to whoever possesses a copy
+of it.  In addition, you must do these things in the Modified Version:
+
+          </p><ol start="1" type="A">
+<li>Use in the Title Page (and on the covers, if any) a title distinct
+from that of the Document, and from those of previous versions
+(which should, if there were any, be listed in the History section
+of the Document).  You may use the same title as a previous version
+if the original publisher of that version gives permission.
+
+          </li><li>List on the Title Page, as authors, one or more persons or entities
+responsible for authorship of the modifications in the Modified
+Version, together with at least five of the principal authors of the
+Document (all of its principal authors, if it has fewer than five),
+unless they release you from this requirement.
+
+          </li><li>State on the Title page the name of the publisher of the
+Modified Version, as the publisher.
+
+          </li><li>Preserve all the copyright notices of the Document.
+
+          </li><li>Add an appropriate copyright notice for your modifications
+adjacent to the other copyright notices.
+
+          </li><li>Include, immediately after the copyright notices, a license notice
+giving the public permission to use the Modified Version under the
+terms of this License, in the form shown in the Addendum below.
+
+          </li><li>Preserve in that license notice the full lists of Invariant Sections
+and required Cover Texts given in the Document's license notice.
+
+          </li><li>Include an unaltered copy of this License.
+
+          </li><li>Preserve the section Entitled “History”, Preserve its Title, and add
+to it an item stating at least the title, year, new authors, and
+publisher of the Modified Version as given on the Title Page.  If
+there is no section Entitled “History” in the Document, create one
+stating the title, year, authors, and publisher of the Document as
+given on its Title Page, then add an item describing the Modified
+Version as stated in the previous sentence.
+
+          </li><li>Preserve the network location, if any, given in the Document for
+public access to a Transparent copy of the Document, and likewise
+the network locations given in the Document for previous versions
+it was based on.  These may be placed in the “History” section. 
+You may omit a network location for a work that was published at
+least four years before the Document itself, or if the original
+publisher of the version it refers to gives permission.
+
+          </li><li>For any section Entitled “Acknowledgements” or “Dedications”, Preserve
+the Title of the section, and preserve in the section all the
+substance and tone of each of the contributor acknowledgements and/or
+dedications given therein.
+
+          </li><li>Preserve all the Invariant Sections of the Document,
+unaltered in their text and in their titles.  Section numbers
+or the equivalent are not considered part of the section titles.
+
+          </li><li>Delete any section Entitled “Endorsements”.  Such a section
+may not be included in the Modified Version.
+
+          </li><li>Do not retitle any existing section to be Entitled “Endorsements” or
+to conflict in title with any Invariant Section.
+
+          </li><li>Preserve any Warranty Disclaimers.
+          </li></ol>
+
+     <p>If the Modified Version includes new front-matter sections or
+appendices that qualify as Secondary Sections and contain no material
+copied from the Document, you may at your option designate some or all
+of these sections as invariant.  To do this, add their titles to the
+list of Invariant Sections in the Modified Version's license notice. 
+These titles must be distinct from any other section titles.
+
+     </p><p>You may add a section Entitled “Endorsements”, provided it contains
+nothing but endorsements of your Modified Version by various
+parties—for example, statements of peer review or that the text has
+been approved by an organization as the authoritative definition of a
+standard.
+
+     </p><p>You may add a passage of up to five words as a Front-Cover Text, and a
+passage of up to 25 words as a Back-Cover Text, to the end of the list
+of Cover Texts in the Modified Version.  Only one passage of
+Front-Cover Text and one of Back-Cover Text may be added by (or
+through arrangements made by) any one entity.  If the Document already
+includes a cover text for the same cover, previously added by you or
+by arrangement made by the same entity you are acting on behalf of,
+you may not add another; but you may replace the old one, on explicit
+permission from the previous publisher that added the old one.
+
+     </p><p>The author(s) and publisher(s) of the Document do not by this License
+give permission to use their names for publicity for or to assert or
+imply endorsement of any Modified Version.
+
+     </p></li><li>COMBINING DOCUMENTS
+
+     <p>You may combine the Document with other documents released under this
+License, under the terms defined in section 4 above for modified
+versions, provided that you include in the combination all of the
+Invariant Sections of all of the original documents, unmodified, and
+list them all as Invariant Sections of your combined work in its
+license notice, and that you preserve all their Warranty Disclaimers.
+
+     </p><p>The combined work need only contain one copy of this License, and
+multiple identical Invariant Sections may be replaced with a single
+copy.  If there are multiple Invariant Sections with the same name but
+different contents, make the title of each such section unique by
+adding at the end of it, in parentheses, the name of the original
+author or publisher of that section if known, or else a unique number. 
+Make the same adjustment to the section titles in the list of
+Invariant Sections in the license notice of the combined work.
+
+     </p><p>In the combination, you must combine any sections Entitled “History”
+in the various original documents, forming one section Entitled
+“History”; likewise combine any sections Entitled “Acknowledgements”,
+and any sections Entitled “Dedications”.  You must delete all
+sections Entitled “Endorsements.”
+
+     </p></li><li>COLLECTIONS OF DOCUMENTS
+
+     <p>You may make a collection consisting of the Document and other documents
+released under this License, and replace the individual copies of this
+License in the various documents with a single copy that is included in
+the collection, provided that you follow the rules of this License for
+verbatim copying of each of the documents in all other respects.
+
+     </p><p>You may extract a single document from such a collection, and distribute
+it individually under this License, provided you insert a copy of this
+License into the extracted document, and follow this License in all
+other respects regarding verbatim copying of that document.
+
+     </p></li><li>AGGREGATION WITH INDEPENDENT WORKS
+
+     <p>A compilation of the Document or its derivatives with other separate
+and independent documents or works, in or on a volume of a storage or
+distribution medium, is called an “aggregate” if the copyright
+resulting from the compilation is not used to limit the legal rights
+of the compilation's users beyond what the individual works permit. 
+When the Document is included in an aggregate, this License does not
+apply to the other works in the aggregate which are not themselves
+derivative works of the Document.
+
+     </p><p>If the Cover Text requirement of section 3 is applicable to these
+copies of the Document, then if the Document is less than one half of
+the entire aggregate, the Document's Cover Texts may be placed on
+covers that bracket the Document within the aggregate, or the
+electronic equivalent of covers if the Document is in electronic form. 
+Otherwise they must appear on printed covers that bracket the whole
+aggregate.
+
+     </p></li><li>TRANSLATION
+
+     <p>Translation is considered a kind of modification, so you may
+distribute translations of the Document under the terms of section 4. 
+Replacing Invariant Sections with translations requires special
+permission from their copyright holders, but you may include
+translations of some or all Invariant Sections in addition to the
+original versions of these Invariant Sections.  You may include a
+translation of this License, and all the license notices in the
+Document, and any Warranty Disclaimers, provided that you also include
+the original English version of this License and the original versions
+of those notices and disclaimers.  In case of a disagreement between
+the translation and the original version of this License or a notice
+or disclaimer, the original version will prevail.
+
+     </p><p>If a section in the Document is Entitled “Acknowledgements”,
+“Dedications”, or “History”, the requirement (section 4) to Preserve
+its Title (section 1) will typically require changing the actual
+title.
+
+     </p></li><li>TERMINATION
+
+     <p>You may not copy, modify, sublicense, or distribute the Document except
+as expressly provided for under this License.  Any other attempt to
+copy, modify, sublicense or distribute the Document is void, and will
+automatically terminate your rights under this License.  However,
+parties who have received copies, or rights, from you under this
+License will not have their licenses terminated so long as such
+parties remain in full compliance.
+
+     </p></li><li>FUTURE REVISIONS OF THIS LICENSE
+
+     <p>The Free Software Foundation may publish new, revised versions
+of the GNU Free Documentation License from time to time.  Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.  See
+<a href="http://www.gnu.org/copyleft/">http://www.gnu.org/copyleft/</a>.
+
+     </p><p>Each version of the License is given a distinguishing version number. 
+If the Document specifies that a particular numbered version of this
+License “or any later version” applies to it, you have the option of
+following the terms and conditions either of that specified version or
+of any later version that has been published (not as a draft) by the
+Free Software Foundation.  If the Document does not specify a version
+number of this License, you may choose any version ever published (not
+as a draft) by the Free Software Foundation.
+        </p></li></ol>
+
+<h3 class="heading">ADDENDUM: How to use this License for your documents</h3>
+
+<p>To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and
+license notices just after the title page:
+
+</p><pre class="smallexample">       Copyright (C)  <var>year</var>  <var>your name</var>.
+       Permission is granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version 1.2
+       or any later version published by the Free Software Foundation;
+       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+       Texts.  A copy of the license is included in the section entitled ``GNU
+       Free Documentation License''.
+</pre>
+   <p>If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts,
+replace the “with<small class="dots">...</small>Texts.” line with this:
+
+</p><pre class="smallexample">         with the Invariant Sections being <var>list their titles</var>, with
+         the Front-Cover Texts being <var>list</var>, and with the Back-Cover Texts
+         being <var>list</var>.
+</pre>
+   <p>If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   </p><p>If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License,
+to permit their use in free software.
+
+<!-- Local Variables: -->
+<!-- ispell-local-pdict: "ispell-dict" -->
+<!-- End: -->
+<!-- @node Index -->
+<!-- @unnumbered Index -->
+<!-- @printindex cp -->
+   </p><div class="footnote">
+<hr>
+<a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Resourcability implies being able to
+  use the compiler  to compile some other HLL.  This  term is not very
+  common, but we use  it for precision.</p>
+
+   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> Note  the upper
+case.</p>
+
+   <p class="footnote"><small>[<a name="fn-3" href="#fnd-3">3</a>]</small> The    code   is    only
+<em>conceptually</em> copied.   In practice, this code  is simple picked
+up from  the <samp><span class="env">$GCCHOME</span></samp> (see <a href="#GCC-_002d_002d-An-Introduction">GCC – An Introduction</a>) rather
+than  a physically  copying it  into the  <samp><span class="env">$BUILDDIR</span></samp>.</p>
+
+   <p class="footnote"><small>[<a name="fn-4" href="#fnd-4">4</a>]</small> Note  the lower
+case.</p>
+
+   <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> Recent versions  of GCC can also start  lowering a file
+of C functions rather than just one function as indicated here.</p>
+
+   <p class="footnote"><small>[<a name="fn-6" href="#fnd-6">6</a>]</small> This was  not  cleanly evident  in
+  earlier versions which did not  use the Gimple IR.  After the parser
+  lowered the input to an AST representation it was directly converted
+  to RTL  representation until GCC version 3.   The target independent
+  operations were mostly performed on the RTL representation resulting
+  in a complex code.  Dealing with this code base required a knowledge
+  of what parts of the code were machine dependent and what parts were
+  not – something  that is not <em>a priori</em>  evident.</p>
+
+   <p class="footnote"><small>[<a name="fn-7" href="#fnd-7">7</a>]</small> As  of
+2007.</p>
+
+   <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> In earlier versions of GCC, the activation
+  record used  to be  constructed during the  ASM emission  time.  The
+  trend is to  have the IR-RTL IR do as much  target specific work as
+  possible and in recent  versions, the responsibility of creating the
+  activation record  is with the  RTL subsystem.</p>
+
+   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> The  introduction of
+Gimple tuples  in GCC 4.3  branch actually aggrandises this  view that
+the IR is designed for the purpose.   As of GCC 4.0.2 the Gimple IR is
+conceptually  distinct from the  AST/Generic, but  uses the  same data
+structures as the  AST/Generic.</p>
+
+   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> IR-RTL
+is <em>dumped</em>  in a human  readable Lisp like syntax.</p>
+
+   <p class="footnote"><small>[<a name="fn-11" href="#fnd-11">11</a>]</small> As   of   2007.</p>
+
+   <p class="footnote"><small>[<a name="fn-12" href="#fnd-12">12</a>]</small> This does not mean that whenever there is a need to
+propagate  information across  passes, the  <code> note</code>  construct is
+used.  Global  variables within the code  are also used,  as are extra
+fields in the IR RTL expressions.  We ignore these details.</p>
+
+   <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> As   of  2007.</p>
+
+   <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> It's function pointer to be precise.</p>
+
+   <p class="footnote"><small>[<a name="fn-15" href="#fnd-15">15</a>]</small> RTXs are
+  constructed  from  operators!</p>
+
+   <p class="footnote"><small>[<a name="fn-16" href="#fnd-16">16</a>]</small> As of
+  2007.</p>
+
+   <hr></div>
+
+</body></html>

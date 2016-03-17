@@ -1,0 +1,167 @@
+============================================
+Introduction to Gray Box Probing Assignments
+============================================
+
+In this  series of  simple C  programs we look  at different  aspects of
+the  GIMPLE  representation of  programs  by  considering several  small
+programs and  their corresponding GIMPLE  statements created by  gcc. In
+these  programs  we will  exercise  different  programming features  and
+understand various  shades of the  gimplification process. Note  that we
+are interested in "how a language feature compiles into GIMPLEs", do not
+look  into what  the program  is  achieving. In  most of  the cases  the
+programs will be meaningless (and/or wrong! :).
+
+
+The first section deals with compilation of various C language features.
+The second section  deals with some optimization features.  The names of
+our test programs should give you some  idea of the features we would be
+concentrating on. You do not have to necessarily know the optimizations;
+the problem statements explain them. Where they are not clear, feel free
+to ask any Teaching Assistant.
+
+-------  -----------------------------------------------
+Program  Features
+-------  -----------------------------------------------
+A-1      Declarations, Expressions, and Assignments
+A-2      Conditional Jumps and Control Flow Graphs
+A-3      Loops
+A-4      Arrays and Pointers
+A-5      Static Single Assignment
+-------  -----------------------------------------------
+Program  Optimizations
+-------  -----------------------------------------------
+B-1      Function Inlining
+B-2      Loop Unrolling
+B-3      Value Range Propagation
+B-4      Common Subexpression Elimination
+-------  -----------------------------------------------
+Program  C++ Features
+-------  -----------------------------------------------
+vf-1     Virtual Functions
+vf-2     Virtual Functions
+
+
+=======================
+Section A: GIMPLE dumps
+=======================
+
+In order to produce the dumps  of intermediate stages of the compilation
+process, the following options are useful:
+
+-fdump-tree-all         Dump all GIMPLE passes
+-fdump-ipa-all          Dump all Inter-Procedural Analysis passes
+-fdump-rtl-all          Dump all RTL passes
+
+In each case the word "all" can  be substituted with a pass name (if you
+know it)  to generate a  dump for  only that pass.  For now we  are only
+interested in observing GIMPLE so we will use the first option.
+
+Try using  this option while  compiling the  first exercise and  see the
+generated files:
+
+$ gcc-4.7.2 -c A-1.c -fdump-tree-all
+
+$ ls
+A-1.c                A-1.c.012t.eh             A-1.c.038t.inline_param2
+A-1.c.001t.tu        A-1.c.013t.cfg            A-1.c.138t.cplxlower0
+A-1.c.003t.original  A-1.c.017t.ssa            A-1.c.143t.optimized
+A-1.c.004t.gimple    A-1.c.018t.veclower       A-1.c.224t.statistics
+A-1.c.006t.vcg       A-1.c.019t.inline_param1  A-1.o
+A-1.c.009t.omplower  A-1.c.020t.einline
+A-1.c.010t.lower     A-1.c.037t.release_ssa
+
+Each dump file corresponds to a GIMPLE pass and is named as 
+
+<source_file>.<pass_number>.<pass_name>. 
+
+The exact numbering  might differ in different versions of  GCC so it is
+best to  use wild-cards when  trying to open  the file for  a particular
+pass. For example, to view the pass named "veclower" type:
+
+    $ vi A-1.c.*.veclower
+
+Each time  you are done  with an exercise,  you can clear  the generated
+files using something like:
+
+    $ rm -f A-1.o A-1.c.*
+
+This  will  remove the  compiled  object  (A-1.o)  and   all  the  dumps 
+(A-1.c.*).                                                             
+
+Important: Note the  dot before the * to avoid  removing the source file
+(A-1.c)
+
+Some notable passes are:
+
+    Pass Name          Function
+    ---------          --------
+    gimple             Conversion of original C source to GIMPLE
+    cfg                Construction of Control Flow Graph (CFG)
+    ssa                Conversion to Static Single Assignment (SSA) form
+    optimized          The final result after all GIMPLE optimizations        
+   
+All passes between "ssa" and "optimized" are usually optimization passes
+which we will come to in section B of this assignment.
+
+
+===================================
+Section B:  Optimizations on GIMPLE
+===================================
+
+Before we start with the individual exercises, just a little note on
+GCC's various optimization levels.
+
+
+To enable optimizations, supply GCC with a flag: either -O1, -O2 or -O3.
+The  option -O0  suppresses  all optimizations  whereas  the option  -Os
+improves the program for space. These  levels enable a set of additional
+passes to  execute. Each  optimization level  has a  different trade-off
+between  compilation  time,  generated  code  size  and  generated  code
+speed. You  can even  enable individual  passes using  the corresponding
+"-ftree-<pass_name>" option
+
+e.g. "-ftree-dce" enables Dead Code Elimination.
+
+See  (http://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html) for  more
+info.
+
+As an  exercise, pick any  file and look at  all the dumps  generated at
+different optimization levels:
+
+    rm -f *.c.*                                # Remove previous dumps
+    gcc-4.7.2 -c B-1.c -fdump-tree-all         # Any file will do
+    ls *.c.*                                   # Look at the list of passes
+    rm -f *.c.*                                # Remove previous dumps
+    gcc-4.7.2 -c B-1.c -fdump-tree-all -O1     # Compile with O1 
+    ls *.c.*                                   # More passes?
+    rm -f *.c.*                                # Remove previous dumps
+    gcc-4.7.2 -c B-1.c -fdump-tree-all -O2     # Compile with O2 
+    ls *.c.*                                   # More passes?
+    rm -f *.c.*                                # Remove previous dumps
+    gcc-4.7.2 -c B-1.c -fdump-tree-all -O3     # Compile with O3
+    ls *.c.*                                   # More passes?
+    rm -f *.c.*                                # Remove previous dumps
+    
+A complete list  of optimizations with a brief description  can be found
+by giving the command:
+
+    $ gcc-4.7.2 -c --help=optimizers
+
+To find out which optimizations are enabled at level 2 (other levels are
+0, 1, 3, and s) use the command:
+
+    $ gcc-4.7.2 -c -O2 --help=optimizers -Q
+
+You may use "ls  *.c.* | wc -l" to count the number  of dumps instead of
+viewing the entire list.
+
+============================
+Section C: Virtual Functions
+============================
+
+After understanding  C-language features  (in section  A) and  optimizations (in
+section B) using gcc,  we will examine C++ feature of  virtual functions in this
+section.
+
+Here we will use g++ executable of version 4.7.2 and observe C++ files and their
+*.cfg and *.class dump files generated by g++ (version 4.7.2).

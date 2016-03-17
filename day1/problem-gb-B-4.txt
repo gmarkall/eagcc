@@ -1,0 +1,41 @@
+------------------------------------
+B-4 Common Subexpression Elimination
+------------------------------------
+
+        Here  is  a  small  program   to  observe  the  optimization  of  Common
+        Subexpression Elimination (CSE) or Full Redundancy Elimination (FRE). In
+        the  following program  observe  that the  term "a  +  c" appears  twice
+        (albeit differently)  and thus can be  calculated once and the  value is
+        used next  time when  needed (the redundant  calculation second  time is
+        eliminated, thus the term CSE/FRE).
+
+        You must demand -O2 for CSE/FRE.
+
+        Source file : B-4.c
+        Compilation : gcc-4.7.2 -c -O2 -fdump-tree-all B-4.c
+        View result : vi -O B-4.c.*.ssa B-4.c.*.fre1
+        Clear dumps : rm -f B-4.c.* B-4.o
+
+Program
+-------
+
+        int main()
+        {
+            int a, b, c;
+            b = (a + c + b) * (c + a);
+            return b;
+        }
+
+
+Questions
+---------
+
+        1   How many  times is the expression  (a + c) computed  in the original
+            code (as seen in the SSA pass)? What about after the FRE pass?
+
+        2   Have  there been  any more  optimizations  after FRE?  How will  you
+            check?
+
+        3   Why did  we have  to put a  "return b" in  this assignment?  What if
+            "return b" is changed to "return 0"? Will it make any difference?
+

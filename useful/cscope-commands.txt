@@ -1,0 +1,30 @@
+cscope Utility
+==============
+
+
+Options
+-------
+        
+        -C          Ignore letter-case when searching
+        -q          Enable  fast  symbol lookup  via  an  inverted index.  This
+                    option causes cscope to create 2 more files (default names:
+                    cscope.in.out and cscope.po.out)
+        -R          Recurse sub-directories during search
+        <files>     Build index  file for all  <files> and search  for keywords
+                    only in these
+                    For example, cscope *.* searches in all files including the
+                    non-C language source files
+        
+
+Navigation Through cscope Interface
+-----------------------------------
+        
+        <tab>       Alternate between the menu and the list of matching lines
+        <ctrl> d    Exit cscope
+        <space>     Traverse over the sets of list of matching lines
+        
+
+Help
+----
+
+        man cscope

@@ -1,0 +1,34 @@
+------------------
+B-2 Loop Unrolling
+------------------
+
+        In this  program we observe how  loops can be unrolled  by repeating the
+        loop body  if the compile time  estimate of the loop  count is available
+        and unrolling does not become too large.
+
+        Source file : B-2.c
+        Compilation : gcc-4.7.2 -c -O2 -fdump-tree-all B-2.c
+        View result : vi -O B-2.c.*.ssa B-2.c.*.cunroll
+        Clear dumps : rm -f B-2.c.* B-2.o
+
+Program
+-------
+
+        int N;
+
+        int main()
+        {
+            int i, a = 10;
+            for(i= 0; i < 4; i++)
+            {
+        	a = a + N;
+            };
+            return a;
+        }
+
+Questions
+---------
+
+        1   What will happen if "a = a + N" is replaced by "a = a + 1"?
+
+

@@ -1,0 +1,42 @@
+==========================================
+Checklist for Gray Box Probing Assignments
+==========================================
+
+The assignments  have been  designed with specific  learning objectives.
+The following  self-assessment list should give  you a fair idea  of the
+extent to which you have learnt the expected material.
+
+Please try to respond to these statements after doing the assignments on
+Gray  Box Probing.  Your responses  to the  statements could  be: `Yes',
+`No', or  `Partly', or `I am  not sure'. In  case you are unable  to say
+`Yes' for many  of the statements, we  advise you to talk  to a Teaching
+Assistant to clarify the  concepts. If the need be, we  will try to find
+someone to explain the concepts later in the evening.
+
+1)  I know how to generate GIMPLE dumps.
+    a)  I can ask for a particular pass or dump all passes.
+    b)  I can ask for a human readable GIMPLE or the RAW gimple structures.
+2)  I understand the GIMPLE intermediate representation.
+    a)  I know the different types of GIMPLE statements.
+    b)  I understand the different components of a GIMPLE statement.
+3)  I understand the conversion of C source code to GIMPLE.
+    a)  I know how a statement is broken down into GIMPLE primitives.
+    b)  I understand  how control  flow is  modeled using  gotos between
+        basic blocks.
+    c)  I can visualize the CFG of a program given it's GIMPLE dumps.
+    d)  Given a GIMPLE dump, I can rebuild the original C program.
+4)  I can see that compilation is a sequence of transformations.
+5)  I can  create interesting input  programs for understanding  a given
+    transformation by looking at input and output dumps.
+
+The assignments  have been  designed with specific  learning objectives.
+The following  self-assessment list should give  you a fair idea  of the
+extent to which you have learnt the expected material.
+
+Please try to respond to these statements after doing the assignments on
+Gray  Box Probing.  Your responses  to the  statements could  be: `Yes',
+`No', or `Partly, or I am not sure'. In case you are unable to say `Yes'
+for  many  of the  statements,  we  advise you  to  talk  to a  Teaching
+Assistant to clarify the  concepts. If the need be, we  will try to find
+someone to explain the concepts later in the evening.
+

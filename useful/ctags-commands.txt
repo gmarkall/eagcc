@@ -1,0 +1,43 @@
+ctags Utility
+=============
+
+
+How to navigate over source objects in Vi Editor?
+-------------------------------------------------
+	
+        <ctrl> ]                       Go  to  the  definition  of  the  source
+                                       object on which  the cursor is currently
+                                       positioned
+        <ctrl> t                       Return  to the  location from  where the
+                                       above keystrokes (<ctrl> ]) were used
+        :tnext                         This  command is  useful when  there are
+                                       multiple matches for a source object
+                                       Go to  the next  definition of  the last
+                                       navigated source object
+        :tprev                         This  command is  useful when  there are
+                                       multiple matches for a source object
+                                       Go  to the  previous  definition of  the
+                                       last navigated source object
+        
+
+ctags Options
+-------------
+
+        --list-languages               Lists the languages supported by ctags
+        --list-kinds=<LANG>            Lists   the  kinds   of  objects   (e.g.
+                                       classes,   variables,  unions)   in  the
+                                       language LANG  that are included  in the
+                                       ctags index file
+                                       For example,  '--list-kinds=c' lists the
+                                       kinds of C  language objects included in
+                                       ctags index file
+        --<LANG>-kinds=[+|-]<KINDS>    Include or exclude  the KINDS of objects
+                                       supported by the language LANG
+                                       For  example,   '--c-kinds=+l'  includes
+                                       'local  variables'  in the  ctags  index
+                                       file. By default these are disabled
+        
+
+Help
+----
+        man ctags

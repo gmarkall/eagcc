@@ -1,0 +1,56 @@
+-------------------------------
+C++ Virtual Function Assignment
+ ------------------------------
+
+        Let's  us examine  the behaviour  of  virtual functions.  There are  two
+        versions of  code. vf-1.cpp contains  cout statements to  understand the
+        vtable better.  vf-2.cpp is a copy  of vf-1.cpp is created  without cout
+        statements to read cfg and assembly dumps.
+       
+        Source file: vf-1.cpp vf-2.cpp
+        Compilation: g++-4.7.2 -fdump-tree-all vf-1.cpp
+                     g++-4.7.2 -fdump-tree-all -S -fverbose-asm vf-2.cpp
+        
+        
+Questions
+---------
+        1 Examine class dump.
+          View Results: ./a.out > vf-1.out 
+                        vi -O vf-1.cpp vf-2.cpp.002t.class vf-1.out
+
+          Compare the results of vf-1.out with the vtable present in class dump.
+          Do they match? Why or why not?
+
+        2 Examine cfg dump.
+          View Results: vi -O vf-2.cpp vf-2.cpp.014t.cfg   
+
+          a) Look  at  main  function.  Each  declaration of  an  object  has  a
+             constructor  call.   Examine  the  function  definition   of  class
+             constructors.  Why does  the constructor  of child  class call  its
+             parent class? What does it imply?
+
+          b) Check assignments of array[0], array[1]  and array[2] with the main
+             program. Are they different? Why or Why not?
+
+          c) Check  for  function  calls.  The function  calls  are  changed  to
+             dereferncing the pointer. Find the statements that
+
+              1. Dereference object pointer to access the virtual function table
+              2. Add offset  to the  base of  the table  to access  the function
+                 pointer
+              3. Dereference the function pointer to make the call
+
+        3  Examine the assembly dumps.   
+           View Results: vi -O vf-2.cpp.014t.cfg vf-2.s
+
+           a) Examine  function definitions.  The  assembly  dumps have  mangled
+              names for  function definition.Compare it with  function header of
+              cfg file.
+
+           b) Examine main function.Check for function calls. The function calls
+              are changed to dereferncing the pointer. Find the statements that
+              
+              1. Dereference object pointer to access the virtual function table
+              2. Add offset  to the  base of  the table  to access  the function
+                 pointer
+              3. Dereference the function pointer to make the call

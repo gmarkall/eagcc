@@ -1,0 +1,32 @@
+GNU Make
+========
+
+        GNU  make utility  determines  automatically which  pieces  of a  large
+        program need  to be  recompiled, and issues  the commands  to recompile
+        them.
+
+        make [TARGET1] [TARGET2] ...        Make can be invoked  with a list of
+                                            target names, TARGET1, TARGET2, ...
+
+
+Special Macros For Makefile
+---------------------------
+
+        $@        The file name of the target
+        $<        The name of the first dependency
+        $*        The part of a filename which matched a suffix rule
+        $?        The names of all the dependencies (seperated by spaces) newer
+                  than the target
+        $^        The names of all the  dependencies (separated by spaces), but
+                  with duplicate names removed
+        $+        The names of all the  dependencies (separated by spaces) with
+                  duplicate names included and in the same order as in the rule
+        
+        
+Help
+----
+
+        For further details,
+        
+            1) http://www.gnu.org/software/make/manual/make.html
+            2) man make

@@ -1,0 +1,57 @@
+-----------------------------
+A-5 Static Single Assignment
+-----------------------------
+
+        Now, we are  going to take a  look at the Static  Single Assignment form
+        that GCC uses later during optimization.  In SSA form, each variable may
+        be assigned at most once. Also,  exactly one assignment of each variable
+        dominates every use of the variable.
+
+        In order  to implement SSA, local  variables are suffixed with  a unique
+        number which represents the assignment.  For example, two assignments to
+        the variable `a' may look like `a_0' and `a_1'.
+
+        Compile the following program (file A-5.c) and observe the dumps.
+
+        Source file : A-5.c
+        Compilation : gcc-4.7.2 -c -fdump-tree-cfg -fdump-tree-ssa A-5.c
+        View result : vi -O A-5.c.*.cfg A-5.c.*.ssa
+        Clear dumps : rm -f A-5.c.* A-5.o
+
+Program
+-------
+
+        int main()
+        {
+            int a, b, c, d;
+
+            d = 10;
+            if (c > d) {
+                a = 3;
+                b = 2;
+            } else {
+                a = 2;
+                b = 3;
+            }
+
+            c = a + b;
+        }
+
+
+
+Questions
+---------
+
+        1   Do you notice that each usage of local variable as an operand uses a
+            suffix that can be tracked to it's assignment? Why do some variables
+            have a suffix `(D)'?
+
+        2   Find the point in the CFG in  which the paths of the two assignments
+            to variable `a'  and `b' merge. You will notice  that PHI statements
+            have  been  introduced.  Can  you   guess  the  syntax  of  the  PHI
+            statements?
+
+        3   Can you think of an example in which a PHI node merges more than two
+            versions of a variable?
+
+

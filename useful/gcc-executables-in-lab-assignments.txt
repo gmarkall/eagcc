@@ -1,0 +1,15 @@
+Executables in Lab Assignments
+------------------------------
+
+Note that  all the lab assignments  refer to "gcc-4.7.2" as  the executable name
+for gcc (version 4.7.2). But the name of the executable may be different on your
+own machine. In the commands of the assignments, please replace "gcc-4.7.2" with
+the gcc  executable (version 4.7.2)  installed on your  own machine. On  our lab
+machines, the executable name of gcc (version 4.7.2) is "gcc-4.7.2".
+
+Similarly, the lab  assignments refer to "g++-4.7.2" as the  executable name for
+g++ (version 4.7.2).
+
+In any  case, before using  the executable,  it is a  good practice to  know its
+version. You can check this by using "--version" parameter with the executable.
+

@@ -1,0 +1,59 @@
+---------------------------------------------
+A-2 Conditional Jumps and Control Flow Graphs
+---------------------------------------------
+
+        Compile the following program (file A-2.c) and observe the GIMPLE dumps.
+
+        Source file : A-2.c
+        Compilation : gcc-4.7.2 -c -fdump-tree-gimple A-2.c
+        View result : vi -O A-2.c A-2.c.*.gimple
+        Clear dumps : rm -f A-2.c.* A-2.o
+
+Program
+-------
+
+        int Z;
+
+        void f()
+        {
+	        int a, b, c;
+	        a = Z;
+	        if (a < 10) {
+		        b = 5;
+		        c = 17;
+	        } else {
+		        b = 6;
+		        c = 20;
+		        if (a == 0) {
+			        c = 0;
+		        }
+	        }
+	        Z = b * 10 + c;
+        }
+	
+
+Questions
+---------
+
+        1   How have if-blocks  been translated into GIMPLE  statements? Can you
+            differentiate between conditional and unconditional gotos?
+
+        2   Repeat  the  above compilation,  but  now  asking for  another  dump
+            that  of  the pass  "cfg".  View  this  pass  and say  whether  this
+            representation makes it easier to  read and understand GIMPLEs. Draw
+            the control-flow graph  of the program A-2.c on a  piece of paper by
+            looking at the CFG dump.
+
+            Compilation : gcc-4.7.2 -c -fdump-tree-cfg A-2.c
+            View result : vi -O A-2.c A-2.c.*.cfg
+            
+***Note***  From here  onwards we will only  look at passes from  "cfg" onwards,
+            each of which uses a CFG-based representation using basic blocks.
+            
+            
+Additional Problem
+------------------
+
+        Try to figure  out how GCC handles the  ternary operator [a ? b  : c] in
+        GIMPLE.
+

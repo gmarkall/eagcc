@@ -1,0 +1,42 @@
+-----------------------
+A-4 Arrays and Pointers
+-----------------------
+
+        In this program we observe how GCC treats arrays and pointers.
+
+        Compile  the following  program (file  A-4.c) and  observe the  compiler
+        output to answer the questions.
+
+        Source file : A-4.c
+        Compilation : gcc-4.7.2 -c -fdump-tree-cfg A-4.c
+        View result : vi -O A-4.c A-4.c.*.cfg
+        Clear dumps : rm -f A-4.c.* A-4.o
+
+Program
+-------
+
+        int main()
+        {
+            int a[3];
+            int b[] = {1, 2, 3};
+            int i, *p;
+            for (i=0; i<3; i++) {
+                a[i] = b[i];
+            }
+            p = a;
+            *(p + 2) = 5;
+        }
+
+
+Questions
+---------
+
+        1   How is array declaration and initialization handled?
+
+        2   Why does the statement a[i] = b[i] get broken down to two steps with
+            an intermediate temporary?
+
+        3   Why are there CLOBBER statements at the end?
+
+
+

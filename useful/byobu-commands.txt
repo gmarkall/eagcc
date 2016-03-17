@@ -1,0 +1,68 @@
+Byobu Commands
+==============
+
+        byobu                              Screen manager
+
+
+Level 0 Commands (Quick Start)
+------------------------------
+
+        <F2>                               Create a new window
+        <F3>                               Go to the previous window
+        <F4>                               Go to the next window
+        exit                               Close the current window
+        
+
+Level 1 Commands
+----------------
+
+        <ctrl> a S (capital S, please!)    Split the current region horizontally
+                                           into two new ones
+        <ctrl> a |                         Split  the current  region vertically
+                                           into two new ones
+        <ctrl> a <tab>                     Go  to  the  next region
+        <ctrl> a X (capital X, please!)    Close the current region
+        <ctrl> a                           Resize the current  region using the
+                                           options given below:
+                 :resize +N                Increase the  height of  the current
+                                           region by N
+                 :resize -N                Decrease the  height of  the current
+                                           region by N
+                 :resize N                 Set the height of the current region
+                                           to N
+                 :resize =                 Make all regions equally high
+                 :resize max               Maximize the  height of  the current
+                                           region
+                 :resize min               Minimize the  height of  the current
+                                           region
+        <ctrl> a x                         Lock the terminal
+        <F8>                               Rename the current window
+
+
+Level 2 Commands (Faster Alternatives)
+--------------------------------------
+
+        <ctrl> a \                         Kill all  the windows  and terminate
+                                           the session
+                                           This  is  an alternative  to  typing
+                                           "exit" in each window
+        <ctrl> a <N>                       Go to window number N
+                                           This is  an alternative to  the <F3>
+                                           and <F4> commands
+        <ctrl> a "                         Present  a list  of all  windows for
+                                           selection
+                                           This is  an alternative to  the <F3>
+                                           and <F4> commands
+        <ctrl> a <ctrl> a                  Toggle  to the  previously displayed
+                                           window
+                                           This is  an alternative to  the <F3>
+                                           and <F4> commands
+        
+
+Help
+----
+
+        1) man screen
+        2) <ctrl> a ?
+        3) Press <F9>, then choose the "Help" option
+        

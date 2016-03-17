@@ -1,0 +1,70 @@
+  
+Good!  You are  half-way there.  Now you  know about  how C  is translated  into
+GIMPLE.  Let's see how good you are at understanding the C to GIMPLE conversion.
+
+The following  is a CFG  dump of a somewhat  meaningful little program.  Can you
+predict the  output of  the program just  by looking at  the GIMPLE  dump? Well,
+maybe or  maybe not. But your  task is to  find the corresponding C  program for
+which gcc-4.7.2 generated this GIMPLE dump.
+
+
+---------------------------------------
+A-6 GIMPLE CFG DUMP (file A-6-cfg-dump)
+---------------------------------------
+
+        main ()
+        {
+          int j;
+          int i;
+          int D.2168;
+        
+        <bb 2>:
+          i = 2;
+          goto <bb 11>;
+        
+        <bb 3>:
+          j = 2;
+          goto <bb 7>;
+        
+        <bb 4>:
+          D.2168 = i % j;
+          if (D.2168 == 0)
+            goto <bb 5>;
+          else
+            goto <bb 6>;
+        
+        <bb 5>:
+          goto <bb 8>;
+        
+        <bb 6>:
+          j = j + 1;
+        
+        <bb 7>:
+          if (j < i)
+            goto <bb 4>;
+          else
+            goto <bb 8>;
+        
+        <bb 8>:
+          if (i == j)
+            goto <bb 9>;
+          else
+            goto <bb 10>;
+        
+        <bb 9>:
+          printf ("%d \n", i);
+        
+        <bb 10>:
+          i = i + 1;
+        
+        <bb 11>:
+          if (i <= 100)
+            goto <bb 3>;
+          else
+            goto <bb 12>;
+        
+        <bb 12>:
+          return;
+        
+        }
+        

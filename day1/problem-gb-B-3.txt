@@ -1,0 +1,37 @@
+---------------------------
+B-3 Value Range Propagation
+---------------------------
+
+        In  Value Range  Propagation,  for each  variable, a  range  (a pair  of
+        max-bound and min-bound) is maintained. Those conditional branches whose
+        conditionals lie outside these bounds are eliminated.
+
+        Source file : B-3.c
+        Compilation : gcc-4.7.2 -c -O2 -fdump-tree-all B-3.c
+        View result : vi -O B-3.c.*.ssa B-3.c.*.vrp1 
+        Clear dumps : rm -f B-3.c.* B-3.o
+
+
+Program
+-------
+        
+        #include <stdio.h>
+        int main ()
+        {
+           int a, b;
+           for (a=4 ; a<100; a++) {
+               if (a < 4)
+        	   b = b + 2;
+               else
+        	   b = b * 2;
+           }
+           printf ("%d%d", a, b);
+        }
+        
+Questions
+---------
+
+        1   In the file B-3.c, what values  can variable `a' take? Will the `if'
+            condition [a  < 4] ever  be true?  Inspect the file  B-3.c.*.vrp1 to
+            analyze the dump.
+

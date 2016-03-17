@@ -1,0 +1,41 @@
+---------------------
+B-1 Function Inlining
+---------------------
+
+        In this program we  observe how the code of a function  is placed in the
+        position of  its call if  doing so does not  increase the code  size too
+        much.
+
+        Source file : B-1.c
+        Compilation : gcc-4.7.2 -c -O2 -fdump-tree-all B-1.c
+        View result : vi -O B-1.c.*.ssa B-1.c.*.einline 
+        Clear dumps : rm -f B-1.c.* B-1.o
+
+        Note: On some older versions of gcc the pass may be named "einline2".
+
+Program
+-------
+
+        int AddTwo(int a)
+        {
+            a = a + 2;
+            return a;
+        }
+
+        int main()
+        {
+            int x = 3;
+            x = AddTwo(x);
+            return x;
+        }
+
+Questions
+---------
+
+        1   The body  of AddTwo(x)  seems to  be inlined into  the call  of main
+            rendering the function useless (nobody else is calling it). Then why
+            is the definition of AddTwo(x) still there all the way till the last
+            pass (B-1.c.*.optimized)?
+
+        2   Is there any way to get rid of it?
+

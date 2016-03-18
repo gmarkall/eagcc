@@ -1,0 +1,203 @@
+SSA
+---
+
+;; Function main (main, funcdef_no=11, decl_uid=2194, cgraph_uid=11)
+
+
+Symbols to be put in SSA form
+{ .MEM }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 9
+Number of blocks to update: 8 ( 89%)
+
+
+main ()
+{
+  int b;
+  int a;
+
+<bb 2>:
+  a_4 = 4;
+  goto <bb 7>;
+
+<bb 3>:
+  if (a_1 <= 3)
+    goto <bb 4>;
+  else
+    goto <bb 5>;
+
+<bb 4>:
+  b_6 = b_3 + 2;
+  goto <bb 6>;
+
+<bb 5>:
+  b_7 = b_3 * 2;
+
+<bb 6>:
+  # b_2 = PHI <b_6(4), b_7(5)>
+  a_8 = a_1 + 1;
+
+<bb 7>:
+  # a_1 = PHI <a_4(2), a_8(6)>
+  # b_3 = PHI <b_5(D)(2), b_2(6)>
+  if (a_1 <= 99)
+    goto <bb 3>;
+  else
+    goto <bb 8>;
+
+<bb 8>:
+  printf ("%d%d", a_1, b_3);
+  return;
+
+}
+
+
+Vrp1
+----
+
+;; Function main (main, funcdef_no=11, decl_uid=2194, cgraph_uid=11) (executed once)
+
+;; 2 loops found
+;;
+;; Loop 0
+;;  header 0, latch 1
+;;  depth 0, outer -1
+;;  nodes: 0 1 2 3 4 5 6 7 8
+;;
+;; Loop 1
+;;  header 7, latch 6
+;;  depth 1, outer 0
+;;  nodes: 7 6 4 5 3
+;; 2 succs { 7 }
+;; 3 succs { 4 5 }
+;; 4 succs { 6 }
+;; 5 succs { 6 }
+;; 6 succs { 7 }
+;; 7 succs { 3 8 }
+;; 8 succs { 1 }
+
+SSA replacement table
+N_i -> { O_1 ... O_j } means that N_i replaces O_1, ..., O_j
+
+a_11 -> { a_1 }
+b_12 -> { b_3 }
+
+Number of virtual NEW -> OLD mappings:       0
+Number of real NEW -> OLD mappings:          2
+Number of total NEW -> OLD mappings:         2
+
+Number of virtual symbols: 0
+Incremental SSA update started at block: 7
+Number of blocks in CFG: 9
+Number of blocks to update: 6 ( 67%)
+
+
+
+SSA replacement table
+N_i -> { O_1 ... O_j } means that N_i replaces O_1, ..., O_j
+
+a_13 -> { a_1 }
+a_14 -> { a_1 }
+a_15 -> { a_1 }
+a_16 -> { a_1 }
+
+Number of virtual NEW -> OLD mappings:       0
+Number of real NEW -> OLD mappings:          4
+Number of total NEW -> OLD mappings:         4
+
+Number of virtual symbols: 0
+Incremental SSA update started at block: 7
+Number of blocks in CFG: 10
+Number of blocks to update: 7 ( 70%)
+
+
+
+Value ranges after VRP:
+
+a_1: [4, 100]
+b_2: VARYING
+b_3: VARYING
+b_5(D): UNDEFINED
+b_7: VARYING
+a_8: [5, 100]
+a_11: [100, 100]  EQUIVALENCES: { a_1 } (1 elements)
+b_12: VARYING
+a_14: [4, 99]  EQUIVALENCES: { a_1 a_15 } (2 elements)
+a_15: [4, 99]  EQUIVALENCES: { a_1 } (1 elements)
+a_16: [100, 100]  EQUIVALENCES: { a_1 } (1 elements)
+
+
+Folding predicate a_15 <= 3 to 0
+Simplified relational if (a_1 <= 99)
+ into if (a_1 != 100)
+
+Removing basic block 3
+Removing basic block 9
+Removing basic block 4
+Removing basic block 11
+
+SSA replacement table
+N_i -> { O_1 ... O_j } means that N_i replaces O_1, ..., O_j
+
+a_6 -> { a_1 }
+b_13 -> { b_3 }
+b_14 -> { b_3 }
+a_16 -> { a_1 }
+
+Number of virtual NEW -> OLD mappings:       0
+Number of real NEW -> OLD mappings:          4
+Number of total NEW -> OLD mappings:         4
+
+Number of virtual symbols: 0
+Incremental SSA update started at block: 7
+Number of blocks in CFG: 8
+Number of blocks to update: 5 ( 62%)
+
+
+main ()
+{
+  int b;
+  int a;
+
+<bb 2>:
+  goto <bb 7>;
+
+<bb 3>:
+Invalid sum of incoming frequencies 9897, should be 4948
+  # a_6 = PHI <a_16(7), a_1(5)>
+  # b_13 = PHI <b_14(7), b_3(5)>
+  b_7 = b_13 * 2;
+
+<bb 4>:
+Invalid sum of incoming frequencies 4948, should be 9897
+  # b_2 = PHI <b_7(3)>
+  a_8 = a_6 + 1;
+
+<bb 5>:
+  # a_1 = PHI <a_8(4)>
+  # b_3 = PHI <b_2(4)>
+  if (a_1 != 100)
+    goto <bb 3>;
+  else
+    goto <bb 6>;
+
+<bb 6>:
+  # b_12 = PHI <b_3(5)>
+  a_11 = 100;
+  printf ("%d%d", 100, b_12);
+  return;
+
+<bb 7>:
+  # a_16 = PHI <4(2)>
+  # b_14 = PHI <b_5(D)(2)>
+  goto <bb 3>;
+
+}
+
+
+Answers
+-------
+
+1. a takes on the values 4 to 100, but only 4 to 99 within the scope of the loop
+   body. The if condition will never be true, and the code in the taken branch
+   appears to have been eliminated.

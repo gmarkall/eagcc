@@ -1,0 +1,86 @@
+Gimple
+------
+
+main ()
+{
+  int D.1713;
+  int Z.0;
+  int Z.1;
+  int Z.2;
+  int a;
+  int b;
+  int c;
+  int p;
+  int q;
+  double r;
+
+  p = 6;
+  a = 10;
+  b = 20;
+  D.1713 = a * b;
+  c = D.1713 + 25;
+  p = 6;
+  q = Z;
+  r = 3.45e+1;
+  Z.0 = (int) r;
+  Z = Z.0;
+  Z.1 = Z;
+  Z.2 = Z.1 + 1;
+  Z = Z.2;
+}
+
+
+Answers
+-------
+
+1. One declaration per line. The global declaration `int Z` has disappeared and
+   is not explicitly declared, but presumably it has a unique name meaning
+   consistency in any access to it is preserved. For using Z, its value must be
+   loaded to/stored from locals.
+
+2. One operation per line. Temporaries are introduced whenever an operation is
+   used as an intermediate component of a computation.
+
+3. Floats and doubles are represented using scientific notation. An explicit
+   cast is inserted when a float is assigned to an int.
+
+4. Reads/writes to z performed through loads to/stores from locals. A temporary
+   is required for Z = Z + 1 because the result of the computation Z + 1 cannot
+   be written directly to a memory location.
+
+
+Optional problem
+----------------
+
+Raw dump:
+
+main ()
+gimple_bind <
+  int D.1713;
+  int Z.0;
+  int Z.1;
+  int Z.2;
+  int a;
+  int b;
+  int c;
+  int p;
+  int q;
+  double r;
+
+  gimple_assign <integer_cst, p, 6, NULL>
+  gimple_assign <integer_cst, a, 10, NULL>
+  gimple_assign <integer_cst, b, 20, NULL>
+  gimple_assign <mult_expr, D.1713, a, b>
+  gimple_assign <plus_expr, c, D.1713, 25>
+  gimple_assign <integer_cst, p, 6, NULL>
+  gimple_assign <var_decl, q, Z, NULL>
+  gimple_assign <real_cst, r, 3.45e+1, NULL>
+  gimple_assign <fix_trunc_expr, Z.0, r, NULL>
+  gimple_assign <var_decl, Z, Z.0, NULL>
+  gimple_assign <var_decl, Z.1, Z, NULL>
+  gimple_assign <plus_expr, Z.2, Z.1, 1>
+  gimple_assign <var_decl, Z, Z.2, NULL>
+>
+
+This looks like a raw dump of tree nodes - internally, there is a tree structure
+to gimple, though the dumps normally present it in a more human-readable form.

@@ -1,0 +1,71 @@
+SSA
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1704, cgraph_uid=0)
+
+
+Symbols to be put in SSA form
+{ .MEM }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 6
+Number of blocks to update: 5 ( 83%)
+
+
+main ()
+{
+  int a;
+  int i;
+  int D.1713;
+  int N.0;
+
+<bb 2>:
+  a_3 = 10;
+  i_4 = 0;
+  goto <bb 4>;
+
+<bb 3>:
+  N.0_5 = N;
+  a_6 = a_2 + N.0_5;
+  i_7 = i_1 + 1;
+
+<bb 4>:
+  # i_1 = PHI <i_4(2), i_7(3)>
+  # a_2 = PHI <a_3(2), a_6(3)>
+  if (i_1 <= 3)
+    goto <bb 3>;
+  else
+    goto <bb 5>;
+
+<bb 5>:
+  D.1713_8 = a_2;
+  return D.1713_8;
+
+}
+
+
+Cunroll
+-------
+
+;; Function main (main, funcdef_no=0, decl_uid=1704, cgraph_uid=0) (executed once)
+
+main ()
+{
+  int a;
+  int N.0;
+
+<bb 2>:
+  N.0_12 = N;
+  a_13 = N.0_12 + 10;
+  a_18 = N.0_12 + a_13;
+  a_23 = N.0_12 + a_18;
+  a_28 = N.0_12 + a_23;
+  return a_28;
+
+}
+
+
+Answers
+-------
+
+1. The compiler will be able to evaluate the final value of a and turn the
+   function into the equivalent of "return 14".

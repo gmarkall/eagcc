@@ -1,0 +1,84 @@
+CFG
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+main ()
+{
+  int d;
+  int c;
+  int b;
+  int a;
+
+<bb 2>:
+  d = 10;
+  if (c > d)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  a = 3;
+  b = 2;
+  goto <bb 5>;
+
+<bb 4>:
+  a = 2;
+  b = 3;
+
+<bb 5>:
+  c = a + b;
+  return;
+
+}
+
+
+SSA
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+main ()
+{
+  int d;
+  int c;
+  int b;
+  int a;
+
+<bb 2>:
+  d_3 = 10;
+  if (c_4(D) > d_3)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  a_5 = 3;
+  b_6 = 2;
+  goto <bb 5>;
+
+<bb 4>:
+  a_7 = 2;
+  b_8 = 3;
+
+<bb 5>:
+  # a_1 = PHI <a_5(3), a_7(4)>
+  # b_2 = PHI <b_6(3), b_8(4)>
+  c_9 = a_1 + b_2;
+  return;
+
+}
+
+
+Answers
+-------
+
+1. This is more like the SSA form I was expecting. Maybe (D) means it's missing
+   a definition? (e.g. c is undefined in its use in the first conditional).
+
+2. Syntax of phi statements is probably PHI < prec_1, prec_2, ... prec_n > where
+   prec_i is name(bb) - name being the name of the variable and bb the number of
+   the basic block in which it was declared. There will be a prec_i for ecah
+   preceding BB from which control flow can enter the current BB.
+
+3. This could come from a switch statement or cascading if-else blocks.

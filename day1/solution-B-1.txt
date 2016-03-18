@@ -1,0 +1,134 @@
+SSA
+---
+
+;; Function AddTwo (AddTwo, funcdef_no=0, decl_uid=1704, cgraph_uid=0)
+
+
+Symbols to be put in SSA form
+{ .MEM }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 3
+Number of blocks to update: 2 ( 67%)
+
+
+AddTwo (int a)
+{
+  int D.1712;
+
+<bb 2>:
+  a_2 = a_1(D) + 2;
+  D.1712_3 = a_2;
+  return D.1712_3;
+
+}
+
+
+
+;; Function main (main, funcdef_no=1, decl_uid=1706, cgraph_uid=1)
+
+
+Symbols to be put in SSA form
+{ .MEM }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 3
+Number of blocks to update: 2 ( 67%)
+
+
+main ()
+{
+  int x;
+  int D.1710;
+
+<bb 2>:
+  x_1 = 3;
+  x_2 = AddTwo (x_1);
+  D.1710_3 = x_2;
+  return D.1710_3;
+
+}
+
+
+Einline
+-------
+
+;; Function AddTwo (AddTwo, funcdef_no=0, decl_uid=1704, cgraph_uid=0)
+
+Iterations: 0
+AddTwo (int a)
+{
+  int D.1712;
+
+<bb 2>:
+  a_2 = a_1(D) + 2;
+  D.1712_3 = a_2;
+  return D.1712_3;
+
+}
+
+
+
+;; Function main (main, funcdef_no=1, decl_uid=1706, cgraph_uid=1)
+
+Considering inline candidate AddTwo.
+ Inlining AddTwo into main.
+Iterations: 1
+Merging blocks 2 and 4
+Merging blocks 2 and 3
+
+Symbols to be put in SSA form
+{ D.1718 }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 3
+Number of blocks to update: 2 ( 67%)
+
+
+main ()
+{
+  int D.1718;
+  int a;
+  int x;
+  int D.1710;
+
+<bb 2>:
+  x_1 = 3;
+  a_5 = x_1 + 2;
+  D.1718_6 = a_5;
+  x_2 = D.1718_6;
+  D.1710_3 = x_2;
+  return D.1710_3;
+
+}
+
+
+Optimized
+---------
+
+;; Function AddTwo (AddTwo, funcdef_no=0, decl_uid=1704, cgraph_uid=0)
+
+AddTwo (int a)
+{
+<bb 2>:
+  a_2 = a_1(D) + 2;
+  return a_2;
+
+}
+
+
+
+;; Function main (main, funcdef_no=1, decl_uid=1706, cgraph_uid=1) (executed once)
+
+main ()
+{
+<bb 2>:
+  return 5;
+
+}
+
+
+Answers
+-------
+
+1. It can't be discarded, because it may be called from another translation unit.
+
+2. Add the static keyword to the prototype to signify that its linkage is
+   internal only.

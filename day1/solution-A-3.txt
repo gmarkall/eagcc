@@ -1,0 +1,73 @@
+CFG
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+main ()
+{
+  int j;
+  int i;
+  int sum;
+  int D.1718;
+
+<bb 2>:
+  sum = 0;
+  goto <bb 4>;
+
+<bb 3>:
+  sum = sum * 2;
+
+<bb 4>:
+  if (sum <= 99)
+    goto <bb 3>;
+  else
+    goto <bb 5>;
+
+<bb 5>:
+  i = 0;
+  goto <bb 10>;
+
+<bb 6>:
+  j = 0;
+  goto <bb 8>;
+
+<bb 7>:
+  D.1718 = i * j;
+  sum = D.1718 + sum;
+  j = j + 1;
+
+<bb 8>:
+  if (j <= 49)
+    goto <bb 7>;
+  else
+    goto <bb 9>;
+
+<bb 9>:
+  i = i + 1;
+
+<bb 10>:
+  if (i <= 24)
+    goto <bb 6>;
+  else
+    goto <bb 11>;
+
+<bb 11>:
+  return;
+
+}
+
+
+Answers
+-------
+
+1. BB 3 and 4 correspond to the while loop. BB2 avoids executing an iteration
+   unconditionally by having an unconditional goto to BB4 which is the while
+   loop conditional. This is different from the if-else jumps, which always seem
+   to be conditional.
+
+2. BB 5:  Outer loop induction variable initialisation
+   BB 10: Outer loop conditional check
+   BB 6:  Inner loop induction variable initialisation
+   BB 8:  Inner loop conditional check
+   BB 7:  Inner loop body + induction variable increment
+   BB 9:  Outer loop induction variable increment

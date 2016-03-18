@@ -1,0 +1,54 @@
+CFG
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+main ()
+{
+  int * p;
+  int i;
+  int b[3];
+  int a[3];
+  int * D.1714;
+  int D.1713;
+
+<bb 2>:
+  b[0] = 1;
+  b[1] = 2;
+  b[2] = 3;
+  i = 0;
+  goto <bb 4>;
+
+<bb 3>:
+  D.1713 = b[i];
+  a[i] = D.1713;
+  i = i + 1;
+
+<bb 4>:
+  if (i <= 2)
+    goto <bb 3>;
+  else
+    goto <bb 5>;
+
+<bb 5>:
+  p = &a;
+  D.1714 = p + 8;
+  *D.1714 = 5;
+  a = {CLOBBER};
+  b = {CLOBBER};
+  return;
+
+}
+
+
+Answers
+-------
+
+1. Arrays declared in a single statement with no initialisation and explicit
+   size. Initialisation takes place one element per statement on scope entry.
+
+2. Presumably because like in many architectures, only one memory operation per
+   instruction is permitted. This probably simplifies many things.
+
+3. To mark the arrays as invalid at scope exit - probably to simplify analysis
+   and permit reuse of stack slots, etc.

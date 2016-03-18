@@ -1,0 +1,137 @@
+Gimple
+------
+
+f ()
+{
+  int D.1715;
+  int Z.0;
+  int a;
+  int b;
+  int c;
+
+  a = Z;
+  if (a <= 9) goto <D.1710>; else goto <D.1711>;
+  <D.1710>:
+  b = 5;
+  c = 17;
+  goto <D.1712>;
+  <D.1711>:
+  b = 6;
+  c = 20;
+  if (a == 0) goto <D.1713>; else goto <D.1714>;
+  <D.1713>:
+  c = 0;
+  <D.1714>:
+  <D.1712>:
+  D.1715 = b * 10;
+  Z.0 = D.1715 + c;
+  Z = Z.0;
+}
+
+
+CFG
+---
+
+
+;; Function f (f, funcdef_no=0, decl_uid=1704, cgraph_uid=0)
+
+f ()
+{
+  int c;
+  int b;
+  int a;
+  int Z.0;
+  int D.1715;
+
+<bb 2>:
+  a = Z;
+  if (a <= 9)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  b = 5;
+  c = 17;
+  goto <bb 6>;
+
+<bb 4>:
+  b = 6;
+  c = 20;
+  if (a == 0)
+    goto <bb 5>;
+  else
+    goto <bb 6>;
+
+<bb 5>:
+  c = 0;
+
+<bb 6>:
+  D.1715 = b * 10;
+  Z.0 = D.1715 + c;
+  Z = Z.0;
+  return;
+
+}
+
+
+Answers
+-------
+
+1. If-blocks are turned into conditional gotos to labels. Unconditional gotos
+   are a goto by themselves on a line. Conditional gotos always have two labels
+   for the taken and not-taken branches.
+
+2. It's a bit easier to see the control flow in this representation, but
+   slightly less concise in terms of number of lines.
+
+
+Additional Answer
+-----------------
+
+Code:
+
+void f() {
+  int a = 1, b = 2, c = 3, x;
+  x = a ? b : c;
+}
+
+CFG:
+
+;; Function f (f, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+f ()
+{
+  int x;
+  int c;
+  int b;
+  int a;
+  int iftmp.0;
+
+<bb 2>:
+  a = 1;
+  b = 2;
+  c = 3;
+  if (a != 0)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  iftmp.0 = b;
+  goto <bb 5>;
+
+<bb 4>:
+  iftmp.0 = c;
+
+<bb 5>:
+  x = iftmp.0;
+  return;
+
+}
+
+Answer: It breaks it into conditional gotos, whose control flow both go into a
+single BB (bb 5 in this case) for assignment to the result. This dump seems to
+suggest that the CFG is not quite the SSA I am used to seeing (e.g. would expect
+something like iftmp.0, iftmp.1 in the different branches and a phi-node at the
+joining BB).

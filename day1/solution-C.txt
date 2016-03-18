@@ -1,0 +1,38 @@
+Answers
+-------
+
+1. They do match. The non-virtual methods of the base class override the virtual
+   ones as well as doing so in a non-virtual fashion (i.e. both the static and
+   dynamic resolution is affected).
+
+2. a) The constructor of the child calls the constructor of the parent in order
+   to initialise the parent. It implies that a derived class is constructed
+   after the parent class, and that multiple constructor calls may occur until
+   the base class and all intermediate derived classes are constructed.
+
+   b) They are different - it seems that there is a member with the address
+   of the base object, which should be the same as the address of this object -
+   perhaps this is only needed to make typing consistent?
+
+   c) Dereferences to obtain the VFT are of the form D.2303->_vptr.A. Addition
+   of offsets looks like, e.g.: D.2310 = D.2309 + 8. Dereferencing the function
+   pointer to make the call looks like: OBJ_TYPE_REF(D.2311;D.2307->1) (D.2312,
+   120) (I think)
+
+3. a) The mangled names match those in the comments of each function header in
+   the CFG file.
+
+   b) Dereferencing the object to get the VFT example:
+
+        movq    -48(%rbp,%rax,8), %rax  # array, D.2308
+        movq    (%rax), %rax    # D.2308_10->_vptr.A, D.2309
+
+      Adding offset: 
+
+        addq    $8, %rax
+
+      Dereferencing function pointer to make call (after setup activation
+      record):
+
+        call    *%rax   # D.2311
+

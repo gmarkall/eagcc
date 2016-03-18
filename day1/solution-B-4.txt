@@ -1,0 +1,92 @@
+SSA
+---
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+
+Symbols to be put in SSA form
+{ .MEM }
+Incremental SSA update started at block: 0
+Number of blocks in CFG: 3
+Number of blocks to update: 2 ( 67%)
+
+
+main ()
+{
+  int c;
+  int b;
+  int a;
+  int D.1711;
+  int D.1710;
+  int D.1709;
+
+<bb 2>:
+  D.1709_3 = a_1(D) + c_2(D);
+  D.1710_5 = D.1709_3 + b_4(D);
+  D.1709_6 = c_2(D) + a_1(D);
+  b_7 = D.1710_5 * D.1709_6;
+  D.1711_8 = b_7;
+  return D.1711_8;
+
+}
+
+
+Fre1
+----
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0)
+
+main ()
+{
+  int c;
+  int b;
+  int a;
+  int D.1710;
+  int D.1709;
+
+<bb 2>:
+  D.1709_3 = a_1(D) + c_2(D);
+  D.1710_5 = D.1709_3 + b_4(D);
+  D.1709_6 = D.1709_3;
+  b_7 = D.1710_5 * D.1709_6;
+  b_8 = b_7;
+  return b_8;
+
+}
+
+
+Optimized
+---------
+
+;; Function main (main, funcdef_no=0, decl_uid=1703, cgraph_uid=0) (executed once)
+
+main ()
+{
+  int c;
+  int b;
+  int a;
+  int D.1710;
+  int D.1709;
+
+<bb 2>:
+  D.1709_3 = a_1(D) + c_2(D);
+  D.1710_5 = D.1709_3 + b_4(D);
+  b_7 = D.1709_3 * D.1710_5;
+  return b_7;
+
+}
+
+
+
+Answers
+-------
+
+1. Twice, though the operands are in different orders. It is only computed once
+   after the FRE pass.
+
+2. We can check if there have been further optimisations by checking
+   B-4.c.*.optimized, which is the final file after optimisation. It appears
+   that redundant assignments have subsequently been eliminated
+
+3. Not returning b would result in its elimination as dead code, for example in
+   the case where `return b` is changed to `return 0`.

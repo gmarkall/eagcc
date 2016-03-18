@@ -1,0 +1,114 @@
+Problem
+-------
+
+        In this  assignment we will learn  to access gimple statements.  We will
+        also learn to analyze and  extract individual parameters that comprise a
+        gimple statement.  We will also  manupulate the  CFG at its  basic block
+        level according to the gimple statement.
+
+        Write an interprocedural dynamic plugin to
+          a. Identify call  statements and the  basic block containing  the call
+             statements
+
+          b. To split  the basic  block to  isolate the  call statement  i.e the
+             basic block containing  the call statement does not  consist of any
+             other statements and can hence be termed as a Call Block.
+
+        NOTE : There can be four cases that have to be considered:
+
+        1. If the  call statement  in between  a basic  block i.e  surrounded by
+           statements above and below it.
+
+           eg:
+                <bb 2>:
+                  a_1 = 2;
+                  b_3 = c_2(D);
+                  c_4 = c_2(D) - 1;
+                  a_5 = foo (a_1, b_3, c_4);
+                  D.2203_6 = c_4 + a_5;
+                  if (D.2203_6 > b_3)
+                    goto <bb 3>;
+                  else
+                    goto <bb 4>;
+
+           Here the block has  to be split twice, once above  and once below the
+           call statement and the result should like :
+
+                 <bb 2> :
+                  a_1 = 2;
+                  b_3 = c_2(D);
+                  c_4 = c_2(D) - 1;
+        
+                 <bb 7>:
+                  a_5 = foo (a_1, b_3, c_4);
+        
+                 <bb 8>:
+                  D.2203_6 = c_4 + a_5;
+                  if (D.2203_6 > b_3)
+                    goto <bb 3>;
+                  else
+                    goto <bb 4>;
+        
+        2. If the call statement is the first statement in the basic block
+
+                <bb 3>:
+                  a_7 = foo (a_5, b_3, c_4);
+                  c_8 = ~c_4;
+                  goto <bb 5>;
+
+           Here  the basic  block has  to split  only once,  i.e below  the call
+           statement and the result should look like: 
+
+                 <bb 3>:
+                  a_7 = foo (a_5, b_3, c_4);
+        
+                 <bb 9>:
+                  c_8 = ~c_4;
+                  goto <bb 5>;
+        
+        3. If the call statement is the last statement in the basic block
+
+                <bb 4>:
+                  c_9 = a_5 + 3;
+                  a_10 = foo (a_5, b_3, c_9);
+
+           Here the split has to be done before the call statement only.
+
+                 <bb 4>:
+                  c_9 = a_5 + 3;
+        
+                 <bb 10>:
+                  a_10 = foo (a_5, b_3, c_9);
+        
+        4. Finally if  it is already  the only statement,  then do not  make any
+           splits.
+        
+        
+Procedure
+---------
+
+        Basic structure of the plugin is provided  to you. Use it and follow the
+        below steps.
+
+          1. Use the  `gimple_code' of  the statement  to find  out its  type as
+             `GIMPLE_CALL. Alternatively you can  use the API's `is_gimple_call'
+             which are defined in file gimple.h
+
+          2. Once you detect  a call statement use gsi_prev() function  to go to
+             move the gimple iterator backwards. Now use gsi_end_p() function to
+             see if it is pointing to NULL.  If not, split the basic block using
+             function split_block()
+
+          3. Similarly use  gsi_next() function to  move to iterator  forward to
+             see if the call statement is the last statement of the block or not
+             and split accordingly.
+
+NOTE : Use cscope to see the definition  and usage of gsi_prev(), gsi_next() and
+       split_block() Also  split_block() function  returns the egde  'e' between
+       the sent basic block  and the new basic block formed.  Thus the new basic
+       block can  be found in e->dest  i.e destination of e.  Use gsi_start_bb()
+       function to get the iterator to point  to the first statement of this new
+       basic block.
+
+
+

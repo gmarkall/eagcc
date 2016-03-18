@@ -1,0 +1,60 @@
+Problem
+-------
+
+        Write  an  intra-procedural pass  to  traverse  the  basic blocks  in  a
+        procedure according to depth first traversal and print the corresponding
+        depth first index.
+
+Algorithm
+---------
+
+        The  general algorithm  for DFS  traversal for  a graph  G and  starting
+        vertex v is given below:
+        
+          procedure DFS(G,v):
+              label v as explored and number v
+              for all edges e in G adjacent to v do
+                  w ← adjacent vertex of v in G e
+                  if w is unexplored then
+                     recursively call DFS(G,w)
+        
+Procedure
+---------
+
+        Basic structure of the plugin is provided  to you. Use it and follow the
+        below  steps. You  will need  a data  structure to  store the  following
+        information for each basic block:
+                a) Whether it is visited or not
+                b) DFS index
+
+        You can  use a  simple array  to store this  information. Use  the array
+        index to signify  the basic block index  and its value to  store the DFS
+        index. Use a default  value, say -1, to indicate that  a basic block has
+        not been visited yet. For example, a[5] = 3 => basic block BB5 has a DFS
+        index of 3. The size of the array should be total number of basic blocks
+        given by 'n_basic_blocks'.
+
+          1. Use "ENTRY_BLOCK_PTR" macro to get the entry block.
+
+          2. Use "FOR_EACH_EDGE" macro to iterate over all the edges originating
+             at a basic block.
+
+          3. Iterate  over the  edges  and visit  the  destination basic  blocks
+             recursively or non-recursively(using a stack) and number them.
+
+Example
+-------
+
+        Following is the expected result for a sample program in test.c
+
+        BB Index        DFN
+        0               0
+        1               5
+        2               1
+        3               2
+        4               3
+        5               6
+        6               8
+        7               7
+        8               4
+

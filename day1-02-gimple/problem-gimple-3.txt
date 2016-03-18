@@ -1,0 +1,64 @@
+Problem
+--------
+
+        Outline a strategy to perform dead code elimination. An assignment would
+        be considered as dead code if the variable on left hand side is not used
+        further. eg.  In the below  example, variable  `b' is not  used further.
+        Thus the statement `b = 5' is dead code.
+
+
+                Input Program             |   Dead Code Elimination
+             -----------------------------------------------------------  
+                void main()               |    void main()
+                {                         |    {
+                  int a,b,c,d;            |      int a,b,c,d;
+                                          |
+                  a = 2;                  |      a = 2;
+                  b = 5;                  |      b = 5;   /* Dead code */
+                                          |
+                  c = a;                  |      c = a;
+                                          |
+                  fn (a, c);              |      fn (a, c);
+                }                         |    }
+
+Procedure
+----------
+
+        NOTE : Concept of SSA  - Static Single Assignment: In SSA  form each use
+               of  a variable  is dominated  by  a single  definition. In  other
+               words,  every  variable  in  the  SSA form  will  have  only  one
+               difinition.  If  a variable  is  defined  again,  it is  given  a
+               different SSA name.
+
+        Example:
+                a = 3;
+                c = a;
+                a = 7;
+                c = a; 
+
+        Here the variables 'a' and 'c' are  defined twice, thus have 2 SSA names
+        as shown below:
+
+                a_2 = 3;
+                c_4 = a_2;
+                a_5 = 7;
+                c_6 = a_5;  
+
+        a) Create a  data structure (say a  USE-table) for the SSA  variables to
+           store the SSA  name and a boolean  to show if the varible  is used of
+           not.
+        b) You have to identify two kinds  of statements : Assignment and Return
+           Identify the  assignment statements by  seeing if the gimple  code of
+           the statement is GIMPLE_ASSIGN and the return statements by seeing if
+           it is GIMPLE_RETURN.
+        c) In case of  a return statement extract the return  variable using the
+           function gimple_return_retval()
+        d) In  case  of  an  assignment  statement  extract  the  LHS  of  using
+           gimple_assign_lhs and store the variable  (if not already present) in
+           the USE-table. Since this the  definition of the variable the boolean
+           will be  false. Exctract  the RHS  (1 or 2)  of the  statements using
+           gimple_assign_rhs1 and gimple_assign_rhs2 and since these are the use
+           of these variables mark their corresponding boolean as true.
+        e) Traverse the gimple  statements again to remove  the statements whose
+           LHS  did not  have  any use  in the  entire  program using  functions
+           gsi_remove () and release_defs ().

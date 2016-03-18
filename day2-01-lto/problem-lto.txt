@@ -1,0 +1,126 @@
+Problem
+-------
+
+        In  this  assignment we  will  learn  the  role of  Link  Time
+        Optimization  (LTO). LTO combines  all compilation  units that
+        make up  a single executable  and enables optimization  of the
+        entire  program as  a single  unit. LTO  can only  combine the
+        translation units submitted to GCC and hence library functions
+        are  not   covered  by  LTO.    This  expands  the   scope  of
+        interprocedural optimizations  to encompass the  whole program
+        (or, rather, everything that is visible at link time).
+
+        A  patch is  provided to  you. This  patch dumps  the  list of
+        passes executed in each phase and the values of the flags. The
+        value  of the  flags indicates  whether  the phase  is wpa  or
+        ltrans. Makefile and the  input programs `test1.c' & `test2.c'
+        are also provided.
+
+        Place the patch alongwith the gcc-4.7.2 source directory.
+        Command to apply the patch is
+                patch -p0 <pass_dump_patch
+        Build gcc again.
+        (We have already  applied the patch and installed  the gcc for
+        you. Use g++-4.7.2-lto to invoke the applied patch.)
+
+        A dynamic plugin for  interprocedural pass is provided to you.
+        This  pass iterates over  all the  functions and  prints every
+        gimple  statement  in the  function.  Makefile  and the  input
+        programs `test1.c' & `test2.c' are also provided.
+
+  
+        1. Use the Makefile and build the target without the option
+
+		"-flto"
+
+        2. Use the Makefile and build the target with the option 
+
+		i.   "-flto -flto-partition=none"
+
+		ii.  "-flto -flto-partition=balanced"
+
+		iii. "-flto -flto-partition=1to1"
+
+        3. With    the   option    -flto-partition=balanced   multiple
+           partitions  can   be  created.   Use  the   option  --param
+           lto-partitions  and  --param lto-min-partition  to  specify
+           partitions of different sizes.
+
+           Observe 
+                - which function  bodies are  dumped in the  dump file
+                  with the  extension `.dump_fns*' for  the individual
+                  test programs.
+
+                - which function  bodies are dumped after  merging the
+                  .o files in both the wpa and ltrans phase.
+
+                - the values of flags displayed on the terminal.
+
+          a.  What difference  do you  observe with and  without -flto
+              option?
+
+          b.  What  difference  do  you  observe  with  the  different
+              -flto-partition options?
+
+          c.  Can you construct multiple partitions of different sizes
+              using  the  option  --param lto-partitions  and  --param
+              lto-min-partition?
+
+Procedure
+---------
+Note : Type command `make clean' before every use of `make'.
+
+        The  following steps are to be followed to  execute the  given
+        pass. The  Makefile uses  the name  `merged' for  the combined
+        translation unit.
+
+        1.  Execute the plugin  by giving the command `make test'. The
+            option "-flto" has not been specified for this target.
+
+        2.  Read    the    dump     files    with    the    extensions
+            `.dump-fns-after-pta'  and   `.dump-fns-after-inline'  for
+            individual  test   files.  Do  you  find   a  file  called
+            `merged.*.dump-fns*'? What is the value of flag `in_lto_p'
+            and why?
+
+        3.  Execute   the  plugin   by   giving   the  command   `make
+            test-none'.  The option  used  for this  target is  "-flto
+            -flto-partition=none". When  is the value of  the flag _p'
+            `in_ltoset  to 1  and  why?  What are  the  values of  the
+            flag_wpa' and flags ``flag_ltrans'? What do they indicate?
+
+        4.  Read  the  dump  files with  the  extensions  `.dump-fns*'
+            for   individual   test   files    and   also   the   file
+            `merged.*.dump-fns*'. Observe the values of all the flags.
+
+        5.  Execute   the  plugin   by   giving   the  command   `make
+            test-balanced'. The option that is used for this target is
+            "-flto -flto-partition=balanced". 
+
+        6.  Read  the  dump  files with  the  extensions  `.dump-fns*'
+            for   individual   test   files    and   also   the   file
+            `merged.*.dump-fns*'. Observe the values of all the flags.
+            Why  is  the  function   `lto_main'  called  twice?  Flags
+            `flag_wpa' and  `flag_ltrans' can have values  either 0 or
+            1. When wpa and ltrans phase  is invoked what is the value
+            of these flags?
+
+        7.  Execute the plugin by giving the command `make test-1to1'.
+            The  option  that  is  used  for  this  target  is  "-flto
+            -flto-partition=1to1".
+
+        8.  Read  the  dump  files with  the  extensions  `.dump-fns*'
+            for   individual   test   files    and   also   the   file
+            `merged.*.dump-fns*'. Observe the values of all the flags.
+            Why  do  we have  multiple  `ltrans'  phase? How  are  the
+            partitions formed?
+
+        9.  Execute   the  plugin   by   giving   the  command   `make
+            test-balanced1' & `make test-balanced2'.
+
+        10. Observe  the difference  in the  output and  explain. Also
+            observe  the values  of  all  the flags.  Why  is there  a
+            difference in the number of times `lto_main' being called?
+            The number of  partitions formed is different  in both the
+            cases. Why is there a difference in the partitions formed?
+

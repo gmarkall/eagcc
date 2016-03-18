@@ -1,0 +1,316 @@
+Learning Objective
+------------------
+
+        To understand  gcc source  structure, and pin  down the  dependencies of
+        various  files using  BuildBrowser tool.  In particular,  understand the
+        three stage build process of GCC.
+
+        A file t depends  on another file s if s is required  to to create t; we
+        call  s  as  the source  of  the  dependency  and  t as  the  target  of
+        the  dependency.  For  simplicity,  we exclude  the  header  files  from
+        consideration.
+
+        We generically refer  to C source files by '.c'  files, the object files
+        by '.o' files, the machine description files by '.md' files, the archive
+        files by '.a'  files, and the assembler source files  by '.S'. We assume
+        that the executable files do not have any extension.
+
+Warning!
+--------
+
+        Before you get into this assignement conduct the following check.
+        
+            $ python --version
+        
+        The output of this command would be one of the following:
+        
+        A   python 2.6.6 or 2.7.*
+        B   /bin/bash: python: command not found
+        
+        Output  A above  indicates that  your  system has  Python version  2.6.6
+        installed  on it.  Output B  above says  that the  system does  not have
+        support for Python.  If you are using Ubuntu or  Debian, you can install
+        it using the following command.
+        
+            $ sudo apt-get install python
+        
+
+
+Prologue
+--------
+
+        The gcc build is long winding complex process. It involves
+        
+        A) compiling simple `.c' files to `.o' files, 
+        B) generate `.c' files from `.md' files, 
+        C) combine multiple `.o' files into a `.a' file
+        D) generate executables using `.o' and `.a' files etc.
+        
+        This process involves  a large source repository  (nearly 70,000 files).
+        It is very difficult  to examine each line of the  make output, and pick
+        some key  information, or understand  the underlying structure  of these
+        sources.
+        
+        Consider the following make dependencies:
+        
+        1   $BUILD/gcc/build/gengtype-parse.o
+            `- $SOURCE/gcc/gengtype-parse.c
+        
+            This is  obvious as x.o depends  on x.c. In our  terminology, x.o is
+            the target and x.c is the source.
+        
+        2   $BUILD/gcc/cc1
+            +- $BUILD/gcc/attribs.o
+            +- $BUILD/gcc/c-aux-info.o
+            +- $BUILD/gcc/c-convert.o
+            .
+            .
+            .
+            `- $BUILD/libiberty/libiberty.a
+        
+        This one is not easy; we see that the target cc1 depends on many sources
+        which  include  attribs.o libiberty.a  among  other  `.o' files.  It  is
+        important to note that every source may itself be a target which depends
+        on other  sources e.g.  libiberty.a depends on  several `.o's  and those
+        `.o's in turn depend on the corresponding `.c' files etc.
+        
+        We will study and use a  tool, called BuildBrowser, or just bb.py, which
+        will be very handy in developing this understanding.
+
+BuildBrowser Program Usage
+--------------------------
+
+        The BuildBrowser Program,  bb.py, examines output of  make and generates
+        dependancy tree(s) as the per the command line options.
+        
+        The output of the command
+        
+             $ ./bb.py -h
+        
+        is as follows:
+        
+        --------------------------------------------------------------------------
+        Usage: ./bb.py [options] -s src_dir <log_filename>
+        options
+               -h, --help              show this help message
+               -s, --source=src_dir       dir which will apprear as $SOURCE
+               -r                      uses reverse mapping 
+                                    from source -> target
+               -i                     enter interactive search
+               -o, --output=filename       output file name for -x and -t
+               -t                      store the tree in output file
+               -x                     store the XML format in a output file
+               -x,-i and -t are mutually exclusive options
+        
+        default file name for -x is cc1.xml
+        default file name for -t is cc1.txt
+        log_filename is optional and by default it is make.log
+        
+                New Options:
+               -g                       view generator executables (Requires bu-
+        ild directory to search for generators) Supports -r, -i/-t/-x
+               -b --build=build_dir       path to build directory which will be s-
+        earched for generators and source files
+               -e                      print executables generated.
+        
+        --------------------------------------------------------------------------
+        
+        Note the following:
+        
+        - Providing a complete path  with `-s' option is  mandatory. 
+        - bb.py should be an executable file. Use the command 
+          
+          $ chmod u+x bb.py
+        
+          Alternatively, use the command
+          
+          $ python bb.py ...
+        
+        We will use bb.py with `-i' option to interactively identify the sources
+        on which a given target depends.  In order to identify the targets which
+        depend on a given source, we will use the `-r' option.
+        
+Questions
+---------
+
+        Problem 1: Find out the source of the target "toplev.o".
+        
+        Problem 2: Find out the sources of the following three files.
+        
+                   a   insn-recog.c
+                   b   insn-output.c
+                   c   insn-emit.c
+        
+                  Find out the transitive  dependencies by discovering the sources
+                  of the sources that you  find. Further, you  may use  bb.py to
+                  directly find the dependencies upto depth 3.
+        
+        Problem 3: List all `.c' files that depend on regex.o. 
+        
+        Problem 4: Find out number of generator programs created.
+        
+        Problem 5: Find dependency of cc1 upto 3 levels  which are present only 
+                   in one of the three stages and not in others.
+        
+
+
+Procedure
+---------
+
+        1   Execute bb.py on the "make.log".
+        
+            $ ./bb.py -i -s $SOURCE make.log
+        
+            You will have to answer the  questions posed by bb.py. Remember this
+            is an  interactive session, you  will have to enter  other commands,
+            observe the results, till you are satisfied.
+        
+            As a special  case, if you enter "^cc1$" (without  quotes, there are
+            just 5 characters  carrot-c-c-1-dollar) you will be able  to see the
+            sources on which the target cc1 depends.
+        
+        3   For the targets that depend on regex.o, we need to use the rever-
+            se mapping mode. The command will be:
+        
+            $ ./bb.py -r -i -s $SOURCE make.log
+        
+            (-r for reverse).
+        
+        4   For the generator executables, we need to use -g option (for showing
+            generator files) with -b option to give path to build directory. The
+            command will be:
+        
+            $ ./bb.py -i -g -b $BUILD -s $SOURCE make.log.
+        
+        5   For finding  differences in depedency among  the stages you have to 
+            write the  expression for the stage in the interactive mode. For eg.
+            if we want dependency  that only occurs  in first stage, expression 
+            would be:
+        
+            1 and not 2 and not 3 and not p.
+        
+        
+
+Installing GCC
+---------------
+
+Installation of pre-requisites is required for building GCC
+-----------------------------------------------------------
+
+        Check if pre-requisites are already installed, if not do following :
+        
+        Step 1:
+        
+        Installing GMP 4.3.2
+        
+        Download gmp 4.3.2 tarball
+        Untar the gmp-4.3.2 tarball
+        
+            ~/gcc_build$. tar -xvf gmp-4.3.2-tar.gz
+        
+        This will create a folder 'gmp-4.3.2'.
+        
+            ~/gcc_build$ cd gmp-4.3.2
+        
+        ~/gcc_build/gmp-4.3.2$ CPPFLAGS=-fexceptions ./configure --enable-cxx --prefix=/usr/local
+        ~/gcc_build/gmp-4.3.2$ make
+        ~/gcc_build/gmp-4.3.2$ make check
+        ~/gcc_build/gmp-4.3.2$ sudo make install
+        ~/gcc_build/gmp-4.3.2$ sudo ldconfig
+        
+        (else it could not recognize the version of gmp while installing mpfr)
+        ~/gcc_build/gmp-4.3.2$ cd ..
+        
+        link : http://gmplib.org/list-archives/gmp-announce/2010-January/000025.html
+        
+        Step 2 : Installing MPFR-3.0.0
+        
+        Download mpfr 3.0.0 tarball
+        Untar the mpfr-3.0.0 tarball
+        
+        ~/gcc_build$. tar -xvf mpfr-3.0.0-tar.gz
+        
+        This will create a folder 'mpfr-3.0.0'.
+        ~/gcc_build$ cd mpfr-3.0.0
+        
+        ~/gcc_build/mpfr-3.0.0$ ./configure --prefix=/usr/local
+        ~/gcc_build/mpfr-3.0.0$ make
+        ~/gcc_build/mpfr-3.0.0$ make check
+        ~/gcc_build/mpfr-3.0.0$ sudo make install
+        ~/gcc_build/mpfr-3.0.0$ sudo ldconfig
+        ~/gcc_build/mpfr-3.0.0$ cd ..
+        
+        link : http://www.mpfr.org/mpfr-3.0.0/
+        
+        Step 3: Installing MPC-0.8.2
+        
+        Download mpc 0.8.2 tarball
+        Untar the mpc-0.8.2 tarball
+        ~/gcc_build$. tar -xvf mpc-0.8.2-tar.gz
+        
+        This will create a folder 'mpc-0.8.2'.
+        
+        ~/gcc_build$ cd mpc-0.8.2
+        ~/gcc_build/mpc-0.8.2$ ./configure --prefix=/usr/local
+        ~/gcc_build/mpc-0.8.2$ make
+        ~/gcc_build/mpc-0.8.2$ make check
+        ~/gcc_build/mpc-0.8.2$ sudo make install
+        ~/gcc_build/mpc-0.8.2$ sudo ldconfig
+        ~/gcc_build/mpc-0.8.2$ cd ..
+        
+        link : http://www.multiprecision.org/?prog=mpc&page=download
+        
+        
+Building GCC 
+--------------
+
+        Step 4 : Downloading the gcc source code tarball
+        
+        Download gcc-4.x.x tarball in this folder.
+        Untar the gcc-4.x.x tarball
+        ~/gcc_build$. tar -xvf gcc-4.x.x-tar.gz
+        
+        After untarring, you will see a folder 'gcc-4.x.x' Make the 'build' and 'install' directories.
+        
+        ~/gcc_build$. mkdir build
+        ~/gcc_build$. mkdir install
+        
+        Step 5 : Building GCC 4.x.x
+        
+        
+        Let us assume that $SRC is the absolute path of gcc-4.x.x directory. cd to the build directory.
+        
+        ~/gcc_build$. cd build
+        
+        Configure gcc-4.x.x. For example, if we wish to build a C compiler, type the following to configure gcc.
+        
+        ~/gcc_build/build$. $SRC/configure --enable-languages=c --prefix=<absolute path of install dir.>
+        
+        After configuring successfully, build gcc-4.x.x.
+        
+        ~/gcc_build/build$. make > make.log 2> make.err
+        
+        If a successful make, install the gcc binaries in the install directory.
+        
+        ~/gcc_build/build$. sudo make install
+        
+        Step  : Testing newly build gcc
+        
+        Create any sample program, say 'test.c'.
+        Compile test program using the recently built gcc-4.x.x.
+        
+        link : http://www.linuxfromscratch.org/blfs/view/svn/general/gcc.html
+        
+
+Conclusion
+----------
+
+        From the exercise above you have viewed several file names. Take any one
+        of them, find its source, and find where  all it feeds in. If you can do
+        that this exercise does not require  any other formal conclusion. Take a
+        try, worth the effort.
+        
+        Additionaly  this tool  reveals more  than  what is  actualy there.  The
+        generated intermediate  files! This is  very important lesson  here. GCC
+        has several  generated files,  which are very  faintly trackable  to the
+        sources. The BuildBrowser serves as a handy tool for this purpose too.

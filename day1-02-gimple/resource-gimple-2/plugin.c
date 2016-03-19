@@ -121,7 +121,30 @@ gimple_analysis (void){
             for (gsi = gsi_start_bb(cbb); !gsi_end_p(gsi); gsi_next (&gsi)){
 	     
 		/* Enter your code here */		
+                if (is_gimple_call(gsi_stmt(gsi))) {
+                    printf("Found a call in BB %d\n", cbb->index);
 
+                    // Move backwards and split if necessary.
+                    gimple_stmt_iterator prev = gsi;
+                    gsi_prev(&prev);
+                    if (!gsi_end_p(prev)) {
+                        printf("This was not the first statement in the block\n");
+                        // Split on the previous node...
+                        edge e = split_block(cbb, gsi_stmt(prev));
+                        gsi = gsi_start_bb(e->dest);
+                    }
+                    // Move forwards and split if necessary...
+                    gimple_stmt_iterator next = gsi;
+                    gsi_next(&next);
+                    if (!gsi_end_p(next)) {
+                        printf("This was not the last statement in the block\n");
+                        // Split on the current node... why does the next basic block have null ptr blowing up gsi_next???
+                        edge e = split_block(cbb, gsi_stmt(gsi));
+                        gsi = gsi_start_bb(e->dest);
+                    }
+                    // Can't/shouldn't continue iterating after making the split. Iterator invalidated, or modification during traversal?
+                    break;
+                }
  	    }
         }
 

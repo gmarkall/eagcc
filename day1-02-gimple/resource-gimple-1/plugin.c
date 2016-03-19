@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
- *  "gcc-plugin.h" must be the FIRST file to be included 
+ *  "gcc-plugin.h" must be the FIRST file to be included
  *-----------------------------------------------------------------------------*/
 #include "gcc-plugin.h"
 #include "config.h"
@@ -18,8 +18,8 @@
 #include "vec.h"
 #include "ggc.h"
 /*-----------------------------------------------------------------------------
- *  Each plugin MUST define this global int to assert compatibility with GPL; 
- *  else the compiler throws a fatal error 
+ *  Each plugin MUST define this global int to assert compatibility with GPL;
+ *  else the compiler throws a fatal error
  *-----------------------------------------------------------------------------*/
 int plugin_is_GPL_compatible;
 
@@ -29,7 +29,7 @@ static unsigned int gimple_dfn(void);
  *  Structure of the pass we want to insert, identical to a regular ipa pass
  *-----------------------------------------------------------------------------*/
 
-struct gimple_opt_pass pass_plugin = 
+struct gimple_opt_pass pass_plugin =
 {
   {
     GIMPLE_PASS,
@@ -50,7 +50,7 @@ struct gimple_opt_pass pass_plugin =
 
 /*-----------------------------------------------------------------------------
  *  This structure provides the information about inserting the pass in the
- *  pass manager. 
+ *  pass manager.
  *-----------------------------------------------------------------------------*/
 struct register_pass_info pass_info = {
   &(pass_plugin.pass),                  /* Address of new pass, here, the 'struct
@@ -76,7 +76,7 @@ plugin_init(struct plugin_name_args *plugin_info,
 {
 
         /*-----------------------------------------------------------------------------
-        * Plugins are activiated using this callback 
+        * Plugins are activiated using this callback
         *-----------------------------------------------------------------------------*/
         register_callback (
         plugin_info->base_name,     /* char *name: Plugin name, could be any
@@ -90,15 +90,48 @@ plugin_init(struct plugin_name_args *plugin_info,
         return 0;
 }
 
+// Note: hardcoded for number of basic blocks in the test program. Would
+// obviously use a more appropriate scheme for a real implementation.
+static const size_t N = 9;
+static int dfn[N];
+static int current = 0;
+
+static void compute_dfn(basic_block bb) {
+    // Mark the current BB as explored
+    dfn[bb->index] = current;
+    current++;
+
+    // Recurse into each unexplored successor
+    edge e;
+    edge_iterator ei;
+    FOR_EACH_EDGE(e, ei, bb->succs) {
+        if (dfn[e->dest->index] == -1) {
+            compute_dfn(e->dest);
+        }
+    }
+}
+
 /* ---------------------------------------------
    The main driver function to perform analysis.
    ---------------------------------------------*/
 static unsigned int gimple_dfn(void)
 {
+    // Get the starting point
+    basic_block entry_bb = ENTRY_BLOCK_PTR;
 
-	/*
-	Write your code here
-	*/  
+    // Initialise the array
+    for (size_t i = 0; i < N; i++) {
+        dfn[i] = -1;
+    }
 
-	return 0;
+    // Perform DFN
+    compute_dfn(entry_bb);
+
+    // Print the numbering
+    printf("BB Index\tDFN\n");
+    for (size_t i = 0; i < N; i++) {
+        printf("%d\t\t%d\n", i, dfn[i]);
+    }
+
+    return 0;
 }

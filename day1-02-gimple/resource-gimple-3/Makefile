@@ -1,6 +1,6 @@
 
-CC = g++-4.7.2
-NEW_PATH = gcc-4.7.2
+CC = g++
+NEW_PATH = gcc
 
 OBJS = plugin.o
 

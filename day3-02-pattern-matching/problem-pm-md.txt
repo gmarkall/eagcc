@@ -1,0 +1,28 @@
+Problem 1
+---------
+
+Start with the recog function and trace down the labels and goto statements
+   for the following pattern.
+
+   (jump_insn 12 11 13 3 
+        (set (pc)
+                (if_then_else (le:SI (reg:SI 41)
+                        (reg:SI 42))
+                        (label_ref 19)
+                    (pc)))
+          (nil))
+
+
+Problem 2
+---------
+
+Create a pattern from the following path by tracing it from insn-recog.c.
+
+Generate a pattern which satisfy the following path of labels by tracing the 
+  the goto statements from insn-recog.c. Can you identify what the output of
+  the pattern ?
+  
+L13 --> L240 --> L14 --> L241 --> L23 --> L243 --> L29 --> L246 --> 
+L33 --> L34 --> return 10.
+
+

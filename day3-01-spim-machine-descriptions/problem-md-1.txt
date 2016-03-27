@@ -1,0 +1,35 @@
+
+Problem statement
+-----------------
+
+        Add spim  level 1 to  gcc and  build cc1. Compile  the following
+        program  with  the generated  cc1.  
+
+        (a) For each statement in the program identify the corresponding
+            GIMPLE statements (dump file with extension ".gimple").
+        (b) For  each GIMPLE  statement identify  the corresponding  RTL
+            statement (dump file with extension ".expand").
+        (c) For each RTL statement,  identify the corresponding assembly
+            statements (dump file with extension ".s").
+
+Test case
+---------
+
+       int x, y;
+       int main ()
+       {
+              int a, b, c;
+              a = b;
+              x = a + b;
+              c=1;
+              y = c;
+       }
+
+Procedure
+---------
+
+       1) Build cc1 with spim as target machine. 
+
+       2) Compiling C program for spim        
+
+          $BUILD/gcc/cc1 <c_file> -fdump-tree-gimple -fdump-rtl-expand

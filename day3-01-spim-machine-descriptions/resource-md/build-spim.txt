@@ -1,0 +1,164 @@
+Instructions to Register Spim Machine Descriptions with GCC and Build GCC for Spim
+----------------------------------------------------------------------------------
+
+
+The long sequence of `-' in the  text below is used to separate code or 
+actual commands from the text in the instructions below.                
+
+Step 1
+------
+
+        Let  $SOURCE_D  be the  absolute  path  of source  (gcc-4.7.2). 
+        We   want   to  add   following   descriptions   in  the   file 
+        $SOURCE_D/config.sub :                                          
+
+        Find the section "case $basic_machine" and add two fragments as
+        described below.
+
+        1. In the part following
+
+          -------------------------------------------------------------
+          # Recognize the basic CPU types without company name.
+          -------------------------------------------------------------
+
+           Add "spim*" without  the quotes. Maintain the  format of `|' 
+           and `\'. Ensure that there `\'  is the last character in the 
+           line (it indicate continuity to the next line).              
+
+        2. In the part following
+
+          # Recognize the basic CPU types with company name.
+
+          Add "spim*-*" without the quotes.  Maintain the format of `|' 
+          and `\'. Ensure  that there `\' is the last  character in the 
+          line (it indicate continuity to the next line).               
+
+Step 2
+------
+
+        In the  file $SOURCE_D/gcc/config.gcc  In the  "case ${target}" 
+        used for defining cpu type, i.e. after the line                 
+
+        ---------------------------------------------------------------
+        # Set default cpu_type, tm_file, tm_p_file and xm_file ...
+        ---------------------------------------------------------------
+
+        add the following case :
+
+        ---------------------------------------------------------------
+        spim*-*-*)
+          cpu_type=spim
+          ;;
+        ---------------------------------------------------------------
+
+        This says that  the machine description files  are available in 
+        the directory $SOURCE_D/gcc/config/spim.                        
+
+Step 3
+------
+
+        In the  file $SOURCE_D/gcc/config.gcc, add the  following in the
+        case ${target} after the case for score-*-elf)
+
+        ---------------------------------------------------------------
+        spim*-*-*)
+                gas=no
+                gnu_ld=no
+                file_base="`echo ${target} | sed 's/-.*$//'`"
+                tm_file="${cpu_type}/${file_base}.h"
+                md_file="${cpu_type}/${file_base}.md"
+                out_file="${cpu_type}/${file_base}.c"
+                tm_p_file="${cpu_type}/${file_base}-protos.h"
+                echo ${target}
+                ;;
+        ---------------------------------------------------------------
+
+        Ensure that  you get the  two kinds  of single quotes  ("`" and 
+        "'")  right in  the definition  of "file_base".  In brief,  the 
+        target  name  supplied by  you  such  as "spim0.0"  or  "spim1" 
+        internally  becomes  "spim0.0-unix-none" or  "spim1-unix-none". 
+        Using the  stream editor sed,  it is truncated to  the original 
+        name  you  supplied  and  is   stored  in  the  shell  variable 
+        file_base.  Since we  have  specified cpu_type  as "spim",  the 
+        above  definitions tell  GCC  build system  that  (if you  gave 
+        target as "spim0.0"                                             
+
+        - the target macro file is "spim/spim0.0.h",
+        - the target md file is "spim/spim0.0.md",
+        - the associated C file is "spim/spim0.0.c", and
+        - the function prototypes are in "spim/spim0.0-protos.h"
+
+        Make  sure that  you get  the  underscores ("_")  at the  right 
+        places in the above. In our experience, the two mistakes (wrong 
+        single  quotes and  missing  underscores) are  the most  common 
+        causes of frustrated moments.                                   
+
+Step 4
+------
+
+        Copy spim resource directory to $SOURCE_D/gcc/config/.
+
+        The  directory  name  is  "spim"  and  should  always  be  same 
+        as cpu_type.  The directory  $SOURCE_D/gcc/config/spim contains 
+        files with four extensions:                                     
+
+        spim*.c, spim*.h, spim*.md, spim*-protos.h,
+
+        where * represents the set of version numbers (or level of spim
+        machine descriptions.
+
+        { 0.0, 0.1, 0.2, 1, 2, 3, 4}.
+
+        It is possible that you are not give all the versions together.
+
+Stem 5
+------
+		Copy spim-common.c from the resource provided 
+		to {SOURCE_D}/gcc/common/config/spim.
+
+Step 6
+------
+
+        Normal  cross  compiler  build  process  attempts  to  use  the 
+        generated cc1 to compile  the emulation libraries (LIBGCC) into 
+        executables using the assembler, linker, and archiver.          
+
+        We are interested  in only the cc1 compiler and  would not like 
+        to build  anything else.  Hence add  a new  target in  the file 
+        "Makefile.in" in $SOURCE_D directory.                           
+
+        ---------------------------------------------------------------
+        .PHONY: cc1
+        cc1:
+        	make all-gcc TARGET-gcc=cc1$(exeext)
+        ---------------------------------------------------------------
+
+        Note that  the line following  "cc1:" must have a  TAB character
+        and no space before "make".
+
+        The  other  common  mistake  is  to  add  this  target  to  the 
+        "Makefile"  in   the  build   directory  rather  than   to  the 
+        "Makefile.in"  in  the  source  directory.  The  "Makefile"  is 
+        generated during  configuration and  hence any change  that you 
+        make is lost when you reconfigure the source.                   
+
+Step 7
+------
+
+        Create directory $BUILD and in  a tree not rooted at $SOURCE_D. 
+        Change the directory  to $BUILD and build cc1  by executing the 
+        commands                                                        
+
+        ---------------------------------------------------------------
+        $ cd $BUILD
+
+        $ $SOURCE_D/configure --enable-languages=c --target=spim<n>
+
+        $ make cc1 > make.log 2> make.err
+        ---------------------------------------------------------------
+
+
+        <n> in  the target specification  is the level of  spim machine 
+        description and is from the set { 0.0, 0.1, 0.2, 1, 2, 3, 4}.   
+
+

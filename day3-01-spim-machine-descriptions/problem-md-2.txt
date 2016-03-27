@@ -1,0 +1,79 @@
+Problem-statement
+-----------------
+
+        Extend spim1.md  file by  writing machine descriptions  for left
+        shift and subtract.
+
+Procedure
+---------
+
+        1) Study addsi3 RTL pattern. The pattern of shift instruction is
+           similar to addsi3.
+        2) Write  a new  RTL  pattern using  define_insn  with the  name
+           ashlsi3 that follows the structure of the pattern for addsi3.
+           Use the RTL  operator `ashift' in place of  `plus' and modify
+           the  predicates  appropriately  (if required).  The  assembly
+           instruction format for left shift is given below.
+           
+           SLL: Shift left logical (Shifts a  register value left by the
+                shift amount  listed in  the instruction and  places the
+                result in a third register. Zeroes are shifted in.)
+
+                Syntax: sll reg1, reg2, const 
+                Semantics: reg1 = reg2 << const
+
+           SLLV: Shift left  logical variable  (Shifts a  register value
+                 left by the  value in a second register  and places the
+                 result in a third register. Zeroes are shifted in.)
+           
+                 Syntax: sllv reg1, reg2, reg3
+                 Semantics: reg1 = reg2 << reg3 
+           
+
+        3) Write  a new  RTL  pattern using  define_insn  with the  name
+           subsi3 that follows the structure  of the pattern for addsi3.
+           Use the  RTL operator `minus'  in place of `plus'  and modify
+           the  predicates  appropriately  (if required).  The  assembly
+           format for subtract is given below.
+
+           SUB:  Subtracts two  registers  and stores  the  result in  a
+           register
+
+                Syntax: sub reg1, reg2, reg3 
+                Semantics: reg1 = reg2 - reg3
+                  
+
+        4) Build cc1 and compile the program given below. 
+
+                int main()
+                {
+                        int a;
+                        int b = a<<2;
+                        a = b-a;
+                        return 0;
+                }       
+                
+           The expected assembly output is as follows
+         
+                .text
+                .align 2
+                .globl main
+            main:
+                sw      $ra,  0($sp)
+                sw      $sp, -4($sp)
+                sw      $fp, -8($sp)
+                move    $fp,  $sp
+                addi    $sp,  $fp, -36
+                lw      $v0, -12($fp)
+                sll     $v0,  $v0, 2
+                sw      $v0, -8($fp)
+                lw      $a0, -8($fp)
+                lw      $v0, -12($fp)
+                sub     $v0,  $a0, $v0
+                sw      $v0, -12($fp)
+                move    $v0,  $zero
+                move    $sp,  $fp
+                lw      $fp, -8($sp)
+                lw      $ra,  0($sp)
+                jr      $ra
+

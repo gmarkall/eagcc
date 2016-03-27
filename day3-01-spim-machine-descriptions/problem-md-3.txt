@@ -1,0 +1,139 @@
+Problem-statement
+-----------------
+
+        The spim1  machine descriptions  do not  support multiplication.
+        Extend  the  spim1.md  file to  support  multiplication  through
+        addition.  Write   define_expand  to  generate   an  appropriate
+        number of  add instructions  instead of a  single multiplication
+        instruction.   Assume   that    the   input   programs   contain
+        multiplication of  the following kinds  where var is  a variable
+        and const is a positive integer constant.
+
+        var = var * const;
+
+        OR
+
+        var = const * var;
+
+        Build GCC for  modified spim1 and compile  the following program
+        using cc1 so created.
+
+        #define N 26
+
+        int main()
+        {
+                int a;
+                return a*N;
+        }
+
+        You can use any of the following values for N.
+
+        26, 38, 43, 44, 50, 53, 58, 70, 74, 76, 77, 78, 82, 83, 84, 
+        86, 87, 88, 89, 91, 92, 98.
+
+        (Why only these? You will know shortly!)
+
+        Observe the generated assembly program to verify whether the 
+        code is correct.
+
+        Assembly output for the above program
+        -------------------------------------
+
+                 .text
+                .align 2
+                .globl main
+        main:
+                sw      $ra, 0($sp)
+                sw      $sp,-4($sp)
+                sw      $fp,-8($sp)
+                move    $fp, $sp
+                addi    $sp, $fp, -36
+                lw      $a0,-12($fp)
+                move    $v0, $zero
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                add     $v0, $v0, $a0
+                move    $sp, $fp
+                lw      $fp,-8($sp)
+                lw      $ra, 0($sp)
+                jr      $ra
+
+Procedure
+---------
+
+        1) Study addsi3 RTL instruction described in spim1.md.
+
+        2) Write  a  new RTL  instruction  using  define_expand by  name
+           mulsi3. The pattern of this instruction is similar to addsi3.
+           Use  "mult" in  place of  "plus" in  RTL pattern.  Modify the
+           predicates appropriately (constraints are optional).
+
+        3) Write  C code  in define_expand  to implement  multiplication
+           using addition.
+
+        Some  useful  information  for  writing   the  C  code  part  in
+        define_expand for this assignment:
+
+           - The macro GET_CODE can be used  to find out whether the RTL
+             node representing an  operand is a constant.  See its usage
+             in spim1.md.  A description of  this macro can be  found in
+             section 10.1  (RTL Object  Types), page  number 125  of gcc
+             internals document (gccint.pdf).
+
+           - If an RTL expression is  an integer constant, its value can
+             be retrieved using the macro  INTVAL. A description of this
+             macro  can be  found in  section 10.7  (Constant Expression
+             Types), page 142 of gcc internals document (gccint.pdf).
+
+           - The generated RTL instructions can  be inserted in the list
+             of instructions using the function emit_insn.
+
+           - In  order  to  construct  an RTL  expression  for  which  a
+             define_insn  exists,  you  can use  the  gen_<pattern_name>
+             function.    For    addsi3    pattern,    we    can    call
+             gen_addsi3(operand1,operand2,operand3)    where   operand1,
+             operand2  and  operand3  are  the  elements  of  "operands"
+             array (the array contains  RTL expressions representing the
+             operands).
+
+           - Execution  of DONE  statement  has the  effect of  forgoing
+             the  generation of  RTL  instruction described  by the  RTL
+             template. Execution  of FAIL  ensures that that  pattern is
+             not matched  and the  expander should  look for  some other
+             pattern.
+
+Optional problems:
+
+        1) If a  negative integer constant  is found in the  program, we
+           want to stop the compilation  gracefully by reporting this as
+           an error. Update your solution to handle this.
+
+        2) Find out what happens to the generated assembly code when the
+           constant has value 2 or 3. Explain your observation.
+
+        3) Find  out  what  happens  to  the  generated  assembly  code.
+           when  the  constant  has  value  4, 5,  7,  11.  Explain  why
+           multiplication instruction is not used.

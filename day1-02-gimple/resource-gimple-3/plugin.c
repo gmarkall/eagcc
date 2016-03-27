@@ -89,6 +89,17 @@ plugin_init(struct plugin_name_args *plugin_info,
         return 0;
 }
 
+// One entry in the use-table
+struct use_info {
+    const char* name;
+    bool used;
+};
+
+// Hard-coded limit
+static const int N = 1000;
+static use_info use_table[N];
+static int use_count = 0; // The standard zero initialises globals?
+
 /* Execute function */
 static unsigned int dead_code_elimination (void)
 {
@@ -100,7 +111,21 @@ static unsigned int dead_code_elimination (void)
 
         /* Iterating over each basic block of a function */
         FOR_EACH_BB_FN (bb, cfun){
-		/* Write your code here */
+            /* Write your code here */
+            gimple_stmt_iterator gsi;
+            for (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next (&gsi)){
+                if (gimple_code(gsi_stmt(gsi)) == GIMPLE_ASSIGN) {
+                    tree t = gimple_assign_lhs(gsi_stmt(gsi));
+                    printf("Found GIMPLE_ASSIGN %s\n", SSA_NAME_VAR(t));
+                    print_gimple_stmt(stdout, gsi_stmt(gsi), 0, 0);
+
+                }
+                else if (gimple_code(gsi_stmt(gsi)) == GIMPLE_RETURN) {
+                    tree t = gimple_return_retval(gsi_stmt(gsi));
+                    printf("Found GIMPLE_RETURN\n");
+
+                }
+            }
         }
 
         return 0;

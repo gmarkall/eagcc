@@ -1,0 +1,13 @@
+Optional problem answers:
+
+1. Change to compiler to exit with error one negative constants made. However,
+this does not error for all negative constants because some don't match mulsi3
+due to strength reduction in gimple.
+
+2. The multiplication is implemented as an add pattern instead, so it doesn't
+use the mulsi3 defined here. (Strength reduction).
+
+3. These are transformed into bit-shifts and combinations of them in gimple so
+again mulsi3 is not used. This is why there are only a certain range of allowed
+values for N in the initial part of the problem, to ensure the mulsi3 pattern is
+used.

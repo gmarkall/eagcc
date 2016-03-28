@@ -1,0 +1,42 @@
+Solution 1
+----------
+
+Starting in recog function:
+
+Reason                                Label
+------                                -----
+
+Because the code is a set:            L13
+fall-through to L2:                   L2
+Because the code is pc:               L7
+It's an if-then-else:                 L141
+condition is lessthan/equal:          L205
+operand is a register:                L206
+other operand is a register:          L207
+taken branch is a label:              L208
+fall-through to L209:                 L209
+not-taken branch is PC:               Return 36, code for insn_ble
+
+
+Solution 2:
+-----------
+
+L13 implies set
+L240/L14 implies reg in SI mode
+L241/L23 implies another reg in SI mode
+L243 implies not a symbolic operand
+L29/L246 implies another register operand in SI mode
+L33 implies plus
+L34 returns 10 for non-memory operand
+
+add instruction with three register operands in SI mode, last one may be
+register or constant, i.e.:
+
+(define_insn "addsi3)
+        [(set (match_operand:SI 0 "register_operand" "=r,r")
+              (plus:SI (match_operand:SI 1 "register_operand" "r,r")
+                       (match_operand:SI 2 "nonmemory_operand" "r,K"))
+         )]
+)
+
+

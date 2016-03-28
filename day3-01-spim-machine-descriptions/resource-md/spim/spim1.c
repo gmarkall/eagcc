@@ -1,7 +1,7 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h" 
+#include "tm.h"
 #include "rtl.h"
 #include "tree.h"
 #include "tm_p.h"
@@ -38,12 +38,12 @@ is_index_reg(int REGN)
 	return IITB_NO;
 }
 
-int 
+int
 is_base_reg(int REGN)
 {
-	if(is_caller_saved_reg(REGN) 
-			|| is_callee_saved_reg(REGN) 
-			|| is_arg_reg(REGN) 
+	if(is_caller_saved_reg(REGN)
+			|| is_callee_saved_reg(REGN)
+			|| is_arg_reg(REGN)
 			|| is_return_val_reg(REGN)
 			|| (REGN>=28 && REGN<=31)
 			|| (REGN == 1)
@@ -109,7 +109,7 @@ is_general_reg(int REGN)
         return IITB_NO;
 }
 
-/* Initialize the GCC target structure. 
+/* Initialize the GCC target structure.
  * All macros taged as target_hook are defined here, instead of defining
  * in .h file. */
 
@@ -119,7 +119,7 @@ spim_struct_value_rtx
 #undef TARGET_ASM_GLOBALIZE_LABEL
 #define TARGET_ASM_GLOBALIZE_LABEL \
 spim_asm_globalize_label
-#undef TARGET_ASM_INTERNAL_LABEL 
+#undef TARGET_ASM_INTERNAL_LABEL
 #define TARGET_ASM_INTERNAL_LABEL \
 spim_asm_internal_label
 
@@ -180,7 +180,7 @@ hard_regno_mode_ok (int REGN, enum machine_mode MODE)
 	return IITB_NO;
 }
 
-int 
+int
 modes_tieable_p(enum machine_mode MODE1, enum machine_mode MODE2)
 {
         if((MODE1 == MODE2)
@@ -192,7 +192,7 @@ modes_tieable_p(enum machine_mode MODE1, enum machine_mode MODE2)
 
 enum reg_class
 regno_reg_class(int REGN)
-{ 
+{
 	if(REGN==0)
                 return ZERO_REGS;
         if(is_callee_saved_reg(REGN))
@@ -222,8 +222,8 @@ reg_class_from_letter (char ch)
 int
 IITB_regno_ok_for_base_p (int REGN)
 {
-        if(is_base_reg(REGN) 
-                || (REGN >= FIRST_PSEUDO_REGISTER 
+        if(is_base_reg(REGN)
+                || (REGN >= FIRST_PSEUDO_REGISTER
                 && is_base_reg(reg_renumber[REGN])))
                 return IITB_YES;
         return IITB_NO;
@@ -232,8 +232,8 @@ IITB_regno_ok_for_base_p (int REGN)
 int
 regno_ok_for_index_p (int REGN)
 {
-        if(is_index_reg(REGN) 
-                || (REGN >= FIRST_PSEUDO_REGISTER 
+        if(is_index_reg(REGN)
+                || (REGN >= FIRST_PSEUDO_REGISTER
 	               && is_index_reg(reg_renumber[REGN])))
                 return IITB_YES;
         return IITB_NO;
@@ -265,7 +265,7 @@ initial_frame_pointer_offset (int DEPTH)
 {
 	int size;
 	size = get_frame_size();
-	return size;	
+	return size;
 }
 
 int registers_to_be_saved(void)
@@ -302,7 +302,7 @@ initial_elimination_offset(int from, int to)
 	{
 		return ((3+registers_to_be_saved())*4+get_frame_size());
 	}
-	else 
+	else
 		printf("\nIt should not come here... Trying to eliminate non-eliminable register!\n");
 		return 0;
 }
@@ -317,14 +317,14 @@ function_value (void)
 int
 constant_address_p (rtx X)
 {
-	return (CONSTANT_P(X) && 
+	return (CONSTANT_P(X) &&
 		GET_CODE(X)!=CONST_DOUBLE
 		&& GET_CODE(X)!=CONST_VECTOR);
 }
 
 /*This function corresponds to the macro GO_IF_LEGITIMATE_ADDRESS. There are
- * two varients of this macro: one when the registers used may or may not be 
- * hard registers, and second when the registers must be LEGITIMATE HARD 
+ * two varients of this macro: one when the registers used may or may not be
+ * hard registers, and second when the registers must be LEGITIMATE HARD
  * REGISTERS. This function checks if the address is legitimate or not.*/
 int
 legitimate_address1(enum machine_mode MODE,rtx X)
@@ -369,7 +369,7 @@ legitimate_address2(enum machine_mode MODE,rtx X)
 
 
 /*Here also, strict and non-strict varients are needed.*/
-int 
+int
 reg_ok_for_base_p1(rtx x)
 {
 	if(is_base_reg(REGNO(x)))
@@ -385,7 +385,7 @@ reg_ok_for_base_p2(rtx x)
 }
 
 /*Here also, strict and non-strict varients are needed.*/
-int 
+int
 reg_ok_for_index_p1(rtx x)
 {
 	if(is_index_reg(REGNO(x)))
@@ -504,7 +504,7 @@ print_operand_address(FILE *STREAM,rtx X)
 	switch(GET_CODE(X))
 	{
 		case SUBREG:
-			/*As in case of register indirect mode, where address 
+			/*As in case of register indirect mode, where address
 			  of operand is present in subreg.*/
 			fprintf(STREAM,"0(%s)",reg_names[REGNO(XEXP(X,0))]);
 			break;
@@ -518,8 +518,8 @@ print_operand_address(FILE *STREAM,rtx X)
 			  form of addressing.*/
 			op1 = XEXP(X,0);
 			op2 = XEXP(X,1);
-			if(GET_CODE(op1) == CONST_INT 
-				&& (GET_CODE(op2) == REG 
+			if(GET_CODE(op1) == CONST_INT
+				&& (GET_CODE(op2) == REG
 					|| GET_CODE(op2) == SUBREG))
 				/*base displacement*/
 			{
@@ -528,8 +528,8 @@ print_operand_address(FILE *STREAM,rtx X)
 						?reg_names[REGNO(op2)]
 						:reg_names[REGNO(XEXP(op2,0))]));
 			}
-			else if (GET_CODE(op2) == CONST_INT 
-					&& (GET_CODE(op1) == REG 
+			else if (GET_CODE(op2) == CONST_INT
+					&& (GET_CODE(op1) == REG
 						|| GET_CODE(op1) == SUBREG))
 				/*base displacement*/
 			{
@@ -545,7 +545,7 @@ print_operand_address(FILE *STREAM,rtx X)
 				output_addr_const(STREAM,X);
 			}
 			else
-				fprintf(STREAM,"Coming in default part of" 
+				fprintf(STREAM,"Coming in default part of"
 						" print_operand_address");
 			break;
 	}
@@ -590,10 +590,10 @@ function_profiler(FILE*asm_file,int labelno)
 {
 }
 
-#undef TARGET_ASM_ALIGNED_SI_OP 
+#undef TARGET_ASM_ALIGNED_SI_OP
 #define TARGET_ASM_ALIGNED_SI_OP "\t.word\t"
 
-#undef TARGET_ASM_ALIGNED_DI_OP 
+#undef TARGET_ASM_ALIGNED_DI_OP
 #define TARGET_ASM_ALIGNED_DI_OP "\t.word\t"
 
 
@@ -636,7 +636,7 @@ void
 spim_prologue(void)
 {
         int i,j;
-	
+
         emit_move_insn(gen_rtx_MEM(SImode,plus_constant(stack_pointer_rtx,-0)),return_addr_rtx);
         emit_move_insn(gen_rtx_MEM(SImode,plus_constant(stack_pointer_rtx,-4)),stack_pointer_rtx);
         emit_move_insn(gen_rtx_MEM(SImode,plus_constant(stack_pointer_rtx,-8)),hard_frame_pointer_rtx);
@@ -657,7 +657,7 @@ void
 spim_epilogue(void)
 {
         int i,j;
-       
+
         for(i=0,j=3;i<FIRST_PSEUDO_REGISTER;i++) /*Restore all the callee-registers from stack frame*/
         {
                 if(df_regs_ever_live_p(i) && !call_used_regs[i] && !fixed_regs[i])

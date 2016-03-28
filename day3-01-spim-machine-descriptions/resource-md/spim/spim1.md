@@ -51,12 +51,12 @@
 )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; This is the basic standard named pattern, which is matched at the time of 
+;; This is the basic standard named pattern, which is matched at the time of
 ;; GIMPLE to RTL conversion. Hence to add assignment operation in our machine
 ;; description, we have to define this standard pattern. We can have various
 ;; variants of this pattern depending upon which target instruction to emit,
 ;; and move patterns supported in the architecture. These variants can be
-;; defined using define_insn patterns and constraints handling specific 
+;; defined using define_insn patterns and constraints handling specific
 ;; pattern.
 
 ;;movmisalignm is to be used for unaligned memory boundaries.
@@ -73,10 +73,10 @@
 	    emit_insn(gen_IITB_move_zero(operands[0],gen_rtx_REG(SImode,0)));
 	    DONE;
   	  }
-	  
+
 	  if(GET_CODE(operands[0])==MEM && GET_CODE(operands[1])!=REG)
 	  {
-	    
+
 	    if(can_create_pseudo_p())
 	    {
 		operands[1]=force_reg(SImode,operands[1]);
@@ -113,11 +113,11 @@
 	      (match_operand:SI 1 "const_int_operand" "i"))]
 	""
 	"li \\t%0, %c1"
-;; This can also be defined using the actual lui instruction along with shift insn, 
+;; This can also be defined using the actual lui instruction along with shift insn,
 ;; but that will be used once shift operation is included in md file.
 )
 
-(define_insn "*symbolic_address_load" 
+(define_insn "*symbolic_address_load"
 	[(set (match_operand:SI 0 "register_operand" "=r")
 	      (match_operand:SI 1 "symbolic_operand" "S"))]
 	""
@@ -125,7 +125,7 @@
 )
 
 ;; Here z is the constraint character defined in REG_CLASS_FROM_LETTER_P
-;; The register $zero is used here. 
+;; The register $zero is used here.
 
 (define_insn "IITB_move_zero"
 	[(set (match_operand:SI 0 "nonimmediate_operand" "=r,m")

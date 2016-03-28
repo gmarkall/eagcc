@@ -1,0 +1,38 @@
+
+
+7) Parallelization has the overhead of thread creation, scheduling and synchronization, it is beneficial to do parallelization only
+   when the loop body has sufficient computation to justify the overhead occured. 
+   With respect to the loop shown below, do the following
+	a) Fuse Loop-1 and Loop-2.
+	b) After performing loop fusion, is the new program semantically equivalent to the original program?. Explain.
+	c) Cost of executing S1 is C1.
+	   Cost of executing S2 is C2.
+	   Cost of executing S1, S2 together is C3.
+	   C3 < C1+C2
+           Apply suitable transformations to parallelize the fused loop.
+           Show that cost of executing transformed loop is less than cost of executing original loops.
+
+
+int main()
+{
+	int A[10000],B[10000];
+	int n=9000,i;
+
+	for(i=0;i<=n;i++) // Loop-1
+	{
+		A[i]= A[i] + B[i+3]; //S1
+	}	
+
+	for(i=0;i<=n;i++) // Loop-2
+	{
+		A[i+2]= B[i] + A[i+2]; //S2
+	}
+
+	return 0;
+}
+
+
+
+
+
+

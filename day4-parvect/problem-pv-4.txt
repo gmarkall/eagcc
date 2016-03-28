@@ -1,0 +1,57 @@
+Problem Statement
+-----------------
+
+        1) For the code in case 1, do the following
+                a) Identify what prohibits vectorization/parallelization.
+                b) Apply    suitable    transformation(s)     and    write    an
+                   equivalent    program    for   which    gcc-4.7.2    performs
+                   vectorization/parallelization.
+
+        2) For the code in case 2, do the following
+                a) Identify  whether  vectorization/parallelization possible  in
+                   the program.
+                b) Apply suitable transformations (other then Loop distribution)
+                   and write an equivalent  program for which gcc-4.7.2 performs
+                   parallelization.
+                        
+
+--------------------------------------------------------------------------------
+
+
+Case 1:
+-------
+
+        #include"stdio.h"
+        int main ()
+        {
+                int i,n;
+                int A[150],B[150],C[150];
+                for (i=1; i<100; i++) 
+                {
+                        A[i] = C[i] + 7;   /* S1 */
+                        C[i+2] = A[i+2] + 10; /* S2 */
+                }
+
+                return (A[n]+C[n]);
+        }
+
+--------------------------------------------------------------------------------
+
+Case 2:
+
+
+        #include"stdio.h"
+        int main()
+        {
+                int a[10000];
+                int b[10000];
+                int i,n;
+                for(i=0;i<10000;i++)
+                {
+                                a[i]=b[i];
+                                b[i]=a[i+1]+b[i+2];
+                }
+                return a[n]+b[n];
+        }
+
+

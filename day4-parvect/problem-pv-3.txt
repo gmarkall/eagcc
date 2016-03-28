@@ -1,0 +1,29 @@
+Problem Statement
+-----------------
+
+        1) For the program given below
+                a) Identify if loop can be vectorized.
+                b) Identify if loop can be parallelized.
+                c) Verify your claim using gcc-4.7.2.
+
+        2) Loop  transformations  generally  enable other  optimizations.  Apply
+           suitable loop transformation and write an equivalent c code for which
+           gcc-4.7.2 will completely  parallelize/vectorize loops in transformed
+           program. Also verify this using gcc-4.7.2.
+
+--------------------------------------------------------------------------------
+
+
+        #include "stdio.h"
+        int main ()
+        {
+                int i,n;
+                int A[500],B[500],C[500];
+                for (i=1; i<500; i++) 
+                {
+                        A[i] = C[i] + A[i-1];   /* S1 */
+                        C[i-1] = A [i-1] + B[i] + 10; /* S2 */
+                }
+                return (A[n]+C[n]);
+        }
+

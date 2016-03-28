@@ -1,0 +1,24 @@
+
+5) State and apply suitable transformation to parallelize the loop without distributing it. 
+
+
+int main()
+{
+	int A[100],B[100],C[100];
+	int i,N=90;
+
+	for(i=1;i<N;i++) /* paralleize this loop */
+	{
+		A[i]=B[i]*B[i]; // S1
+		C[i] = A[i] * A[i-1]; // S2
+	}
+
+	return 0;			
+}
+
+
+
+
+
+
+

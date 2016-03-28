@@ -1,0 +1,56 @@
+Problem Statement
+-----------------
+
+        1) For the code given below
+                a) Identify  the type  of dependence  between statements  within
+                   loop body (RAW, WAR,  WAW, loop carried/loop independent) and
+                   produce result  in the  form array references,  source, sink,
+                   type of dependence and dependence graph.
+                b) Compile   enabling   vectorization/parallelization   option. 
+                   Verify your observations using gcc-4.7.2's dumps.            
+                          
+
+        2) Compare   the  execution   time   of   unoptimized,  vectorized   and
+           parallelized code.
+
+
+        Note: "perf"  tool  should  be  installed  on  your  system  to  measure
+              execution time. (there are other profiler's apart from "perf", you
+              are welcome to try them)
+ 
+        Command to measure execution time: 
+           perf stat -e task-clock -r 50 ./<output_file>.out -o>/dev/null
+
+--------------------------------------------------------------------------------
+
+Case 1:
+-------
+
+        #include"stdio.h"
+        int a[5000000],b[5000000];
+        int main()
+        {
+                int i;
+                for(i=0;i<5000000;i++) {
+                        a[i] = b[i];
+                }
+                return 0;
+        }
+
+--------------------------------------------------------------------------------
+                
+Case 2:
+-------
+
+        #include"stdio.h"
+        int a[256],b[256];
+        int main ()
+        {
+                int i;
+                for (i=0; i<203; i++) {
+                        a[i+4] = b[i] + 2;    /* S1 */
+                        b[i+2] = a[i+1] +1;   /* S2 */        
+                }
+        return 0;
+        }
+ 

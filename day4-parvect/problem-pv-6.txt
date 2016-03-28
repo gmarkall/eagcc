@@ -1,0 +1,26 @@
+
+
+6) With respect to the loop shown below, do the following
+	a) Explain difficulties in parallelizing the loop.
+	b) Construct the linear diophantine equation which expresses dependence in loop.
+	c) State and apply suitable transformation to parallelize the loop. 
+            [Hint: Find the iterations which are dependent]
+
+
+
+int main()
+{	
+	int A[5000],B[5000],i;
+
+	for(i=0;i<=100;i++)
+	{	
+		A[11*i] = A[12*i+3] * B[i];	
+	}
+
+	return 0;
+}
+
+
+
+
+

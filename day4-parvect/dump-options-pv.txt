@@ -1,0 +1,16 @@
+Command Line Options
+--------------------
+
+        The command line options to generate the required dumps are:
+       
+          a. for parallelization : 
+             -fdump-tree-parloops -ftree-parallelize-loops=n -O2
+             where n is the number of threads you wish to create
+       
+          b. for vectorization : 
+             -fdump-tree-vect -ftree-vectorize -msse4 -O2
+       
+          The  dump file  for parallelization  is "*.parloops",  and for
+          vectorization  is  "*.vect".  For  a more  verbose  dump,  use
+          -fdump-tree-vect-all and -fdump-tree-parloops-all
+                                                                             
